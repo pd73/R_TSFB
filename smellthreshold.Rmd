@@ -1,0 +1,129 @@
+### Subject `r substr(allFiles[i],3,7)` Smell Threshold Report
+
+```{r, echo=FALSE,warning=FALSE}
+#Behind the scenes
+fileName <- paste(dataDir,"/",allFiles[i], sep='')
+trialTracks <- smellData(fileName)
+
+track <- trialTracks$track
+nTrack <- length(trialTracks$track)
+
+# this gets the data ready for the probit fit
+xdat <- c(track,-20, 50)
+ydat <- c(trialTracks$corr,0,1)
+
+levs <- sort(unique(xdat))
+correct <- rep(0, length(levs))
+incorrect <- rep(0, length(levs))
+fraction <- rep(0, length(levs))
+
+for (j in 1:length(levs)) {
+  correct[j] <- sum(ydat[xdat == levs[j]])
+  incorrect[j] <- sum(1-ydat[xdat == levs[j]])
+  fraction[j] <- correct[j] /(correct[j] +incorrect[j])
+  }
+
+dat <- as.data.frame(cbind(levs,correct,incorrect,fraction))
+g <- glm(cbind(correct, incorrect) ~ levs,family=binomial(mafc.logit(2)),dat)
+
+pLog <- with(g, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
+
+# Add here the bias calculation and responding at chance Calculation
+nFirst <- sum(trialTracks$stim == 'Odor')
+nSecond <- sum(trialTracks$stim == 'Blank')
+
+rFirst <- sum(trialTracks$resp == 'First')
+rSecond <- sum(trialTracks$resp == 'Second')
+
+fractionFS<- nFirst/(nFirst+nSecond)
+ biasp <- binom.test(c(rFirst, rSecond), p = fractionFS)
+ if (biasp$p.value < 0.05) {
+   biasResp <- "biased"
+ } else {biasResp <- "not biased"}
+ 
+ levels(trialTracks$stim) <- c("Blank", "Odor")
+ levels(trialTracks$resp) <- c("First", "Second")
+ 
+ chisqr<- chisq.test(table(trialTracks$stim,trialTracks$resp))
+#                    
+ summaryData$chiSqr[i] <- chisqr$statistic
+ summaryData$pchi[i] <- chisqr$p.value
+ summaryData$Rratio[i] <- rFirst/(rFirst + rSecond)
+ summaryData$bias[i] <- biasp$p.value
+ summaryData$biasRept[i] <- biasResp
+
+thresh <- trialTracks$thresh[1]
+# sometimes Threshold is incorrectly positive (this is because of the geo mean)
+if (thresh > 0) {thresh <- -thresh}
+threshTrack <- trialTracks$thresh[3:length(trialTracks$thresh)]
+threshTrack <- threshTrack[is.na(threshTrack) == F]
+nRevs <- length(threshTrack)
+if (nRevs > 3){
+summaryData$arithThresh[i] <- mean(threshTrack[(nRevs-4):nRevs])
+summaryData$geoThresh[i] <- -exp(mean(log(abs(threshTrack[(nRevs-4):nRevs]))))
+} else {
+  summaryData$arithThresh[i] <- 0
+  summaryData$geoThresh[i] <- 0
+  }
+
+logThresh <- -coef(g)[1] / coef(g)[2]
+
+summaryData$logThresh[i] <- logThresh
+summaryData$logprob[i] <- pLog
+
+if (pLog < 0.05) {
+  ThresSig = "sig"} else { ThresSig = "not sig"}
+summaryData$Thresh[i] <- thresh
+
+ if (is.na(chisqr$p.value)) {
+   GuessAll <- "fully biased"
+} else if (chisqr$p.value < 0.05) {
+  GuessAll <- "not guessing"
+} else {
+  GuessAll <- "maybe guessing!"
+  if (chisqr$statistic < 1) {GuessAll <- "surely guessing"}
+  }
+
+summaryData$GuessAll[i] <- GuessAll
+
+```
+
+
+```{r, results="asis", echo=FALSE}
+ kable(table(trialTracks$resp,trialTracks$stim))
+#table(trialTracks$stim,trialTracks$resp)
+#chisq.test(table(trialTracks$stim,trialTracks$resp))
+#Leftbinomial <- binom.test(corLeft, nLeft, 0.5)
+#Rightbinomial <- binom.test(corRight, nRight, 0.5)
+```
+ 
+**Chi-Square for both tracks is `r chisqr$statistic`, so this subject is `r GuessAll` (p = `r chisqr$p.value`)**
+
+**The subject's response ratio was `r rFirst/(rFirst + rSecond)*100`% First and so probably `r biasResp` (p = `r biasp$p.value`)**
+ 
+**Note on session: `r thisNote`**
+
+**Note on subject: `r summaryData$demonote[i]`**
+ 
+ 
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+
+plot(1:nTrack,track, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-10,0), main = 'Track')
+
+lines(c(1,nTrack),c(thresh,thresh), col = "black", lty = 1)
+lines(c(1,nTrack),c(logThresh, logThresh), col = "red")
+
+plot(dat$levs,dat$fraction,xlab="Stim Level",ylab="Fraction Correct", main = 'Track Logistic Fit',ylim=c(0,1), xlim= c(dat$levs[2]-1, dat$levs[length(dat$levs)-1]+1)) 
+
+curve(predict(g,data.frame(levs=x),type="resp"),add=TRUE,col = "red")
+lines(c(thresh,thresh),c(0,1), col = "black", lty = 1)
+lines(c(logThresh,logThresh),c(0,1), col = "red")
+```
+
+* The 75% point of the logistic regression is `r logThresh` dB and the fit is `r ThresSig`nificanctly different to a flat line.
+* The geometric mean threshold is `r thresh` dB, while the arithmetic mean threshold is `r summaryData$arithThresh[i]` dB.
+
+---
+
+\pagebreak
+

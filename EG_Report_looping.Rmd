@@ -1,0 +1,211 @@
+---
+title: "ASD Electrogustometry Report - DRAFT"
+author: "Paul D Allen"
+date: '`r date()`'
+output: html_document
+---
+### About this document
+```{r,  echo=FALSE, include=FALSE}
+require(rmarkdown)
+require(ggplot2)
+require(aod)
+require(stats)
+library("psyphy", lib.loc="C:/Program Files/R/R-3.1.2/library")
+library("knitr", lib.loc="C:/Program Files/R/R-3.1.2/library")
+
+#SURFACE 
+#dataDir = 'C:/Users/paul allen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
+#filedir = 'C:/Users/paul allen/Dropbox/@R-working/gustometry'
+#source('C:/Users/paul allen/Dropbox/@R-working/gustometry/gustometerData.R')
+#ENT
+#dataDir = 'C:/Users/pallen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
+#filedir = 'C:/Users/pallen/Dropbox/@R-working/gustometry'
+#source('C:/Users/pallen/Dropbox/@R-working/gustometry/gustometerData.R')
+
+### DNP Lab
+dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Electrogustometry'
+filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
+notefile = 'gustonotes20141001.txt'
+demofile = 'DemoEG.csv'
+gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
+DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
+gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
+gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
+DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+
+source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/gustometerData.R')
+# define link function 
+
+allFiles = dir(dataDir, pattern ="*.txt")
+numStamps = rep(NA,length(allFiles))
+for (i in 1:length(allFiles)) {
+  fileName <- paste(dataDir,"/",allFiles[i], sep='')
+  numStamps[i] <- length(gustometerData(fileName, timeStamps = TRUE))
+  }
+timeStampData = data.frame(
+  id = allFiles,
+  ntimes = numStamps
+  )
+SID <- substr(allFiles, start = 7, stop = 13)
+gender <- rep(NA, length(SID))
+age <- rep(NA, length(SID))
+group <- rep(NA, length(SID))
+L_logThresh <- rep(NA, length(SID))
+L_logprob <- rep(NA, length(SID))
+R_logThresh <- rep(NA, length(SID))
+R_logprob <- rep(NA, length(SID))
+L_revThresh <- rep(NA, length(SID))
+R_revThresh <- rep(NA, length(SID))
+L_allRevs <- rep(NA, length(SID))
+R_allRevs <- rep(NA, length(SID))
+chiSqr <- rep(NA, length(SID))
+GuessAll <- rep(NA, length(SID))
+guessLeft <- rep(NA, length(SID))
+guessRight <- rep(NA, length(SID))
+propLeft <- rep(NA, length(SID))
+pLeft <- rep(NA, length(SID))
+propRight <- rep(NA, length(SID))
+pRight <- rep(NA, length(SID))
+pchi <- rep(NA, length(SID))
+Rratio <- rep(NA, length(SID))
+bias <- rep(NA, length(SID))
+biasRept <- rep(NA, length(SID))
+note <- rep(NA, length(SID))
+demonote <- rep(NA, length(SID))
+
+summaryData <- data.frame(SID,gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,R_logThresh,R_logprob,R_allRevs,R_revThresh,propRight,pRight,guessRight,L_logThresh,L_logprob,L_revThresh,L_allRevs,propLeft,pLeft,guessLeft, note, demonote)
+```
+
+
+This document compiles the current electogustometry data in a format that will allow rapid evaluation of the data from each subject.
+
+It is important to be able to at a glace see the Right and Left track information, and then also the logistic regression estimates on this data.
+
+We want to be able to also compare the threshold estimates from reversals and regression and whether subjects are likely guessing or biased in their responses.
+
+---
+
+\pagebreak
+
+
+## Subject Data
+
+```{r, echo = FALSE, include=FALSE,warning=FALSE}
+out = NULL
+numtoanalyse = length(allFiles)
+for (i in 1:numtoanalyse) {
+  thisNote <- gustnotes$note[gustnotes$ID == SID[i]]
+  thisNote <- paste(thisNote, collapse="; ")
+  if (length(thisNote)==0) {thisNote = 'No note in the database!'}
+  summaryData$note[i] <- thisNote
+  
+  thisGender <- as.character(DemoEG$Gender[DemoEG$SID == SID[i]])
+  if (length(thisGender)==0) {thisGender = 'NA'}  
+  summaryData$gender[i] <- thisGender
+  
+  thisAge <- DemoEG$Age[DemoEG$SID == SID[i]]
+  if (length(thisAge)==0) {thisAge = 'NA'} 
+  summaryData$age[i] <- thisAge
+  
+  thisGroup <- DemoEG$type[DemoEG$SID == SID[i]]
+  if (length(thisGroup)==0) {thisGroup = 'NA'} 
+  summaryData$group[i] <- thisGroup
+  
+  summaryData$demonote[i] <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
+  if (numStamps[i] != 2) {
+    out = c(out, c('Skip file ', allFiles[i]), 'Note:', thisNote, '---')}
+  else {
+    out = c(out,knit_child('gustoreport.Rmd'))
+    }
+  }
+
+write.csv(summaryData, file = paste('EG_SummaryData_Draft_',Sys.Date(),".csv", sep = ''))
+
+summaryData$L_logThresh[summaryData$L_logThresh < -6] <- -10
+summaryData$R_logThresh[summaryData$R_logThresh < -6] <- -10
+summaryData$L_logThresh[summaryData$L_logThresh > 36] <- 40
+summaryData$R_logThresh[summaryData$R_logThresh > 36] <- 40
+
+summaryData$L_revThresh[summaryData$L_revThresh < -6] <- -10
+summaryData$R_revThresh[summaryData$R_revThresh < -6] <- -10
+summaryData$L_revThresh[summaryData$L_revThresh > 36] <- 40
+summaryData$R_revThresh[summaryData$R_revThresh > 36] <- 40
+
+summaryData$L_allRevs[summaryData$L_allRevs < -6] <- -10
+summaryData$R_allRevs[summaryData$R_allRevs < -6] <- -10
+summaryData$L_allRevs[summaryData$L_allRevs > 36] <- 40
+summaryData$R_allRevs[summaryData$R_allRevs > 36] <- 40
+
+
+```
+`r paste(out ,collapse = '\n')`
+
+
+
+
+### Summary of Electrogustometry data
+
+Obtained track data from `r length(summaryData$L_revThresh)-sum(is.na(summaryData$L_revThresh))` out of `r length(summaryData$L_revThresh)` records.
+
+The `r sum(is.na(summaryData$L_revThresh))` subjects with problematic tracks are:
+`r summaryData$SID[is.na(summaryData$L_revThresh)]`
+
+\pagebreak
+
+
+## Histograms and Correlations (or lack of...)
+# Chi-Square
+Large chi-square indicates responses matched the stimuli
+It's a metric of how well the subject 'got it'
+
+``` {r, echo=FALSE, fig.height=5, fig.width=5}
+
+hist(summaryData$chiSqr)
+
+```
+\pagebreak
+
+# Logistic
+
+``` {r, echo=FALSE, fig.height=3.5, fig.width=3.5}
+
+hist(summaryData$L_logThresh, breaks = -10:40)
+
+hist(summaryData$R_logThresh, breaks = -10:40)
+
+plot(summaryData$L_logThresh,summaryData$R_logThresh,xlab="Left Logistic Fit Threshold (dB)",ylab="Right Logistic Fit Threshold (dB)", main = 'Comparision of Left and Right - Logistic Fit') 
+lin <- function(x) x
+curve(lin, from = -10, to = 40, add = TRUE)
+```
+
+\pagebreak
+
+
+# Reversals
+```{r, echo= FALSE, fig.height=3.5, fig.width=3.5}
+
+hist(summaryData$L_revThresh, breaks = -10:40)
+
+hist(summaryData$R_revThresh, breaks = -10:40)
+
+plot(summaryData$L_revThresh,summaryData$R_revThresh,xlab="Left Reversal Threshold (dB)",ylab="Right Reversal Threshold Threshold (dB)", main = 'Comparision of Left and Right - Reversal Threshold') 
+curve(lin, from = -10, to = 40, add = TRUE)
+```
+
+
+\pagebreak
+
+# All reverals
+
+```{r, echo= FALSE, fig.height=3.5, fig.width=3.5}
+
+
+hist(summaryData$L_allRevs, breaks = -10:40)
+
+hist(summaryData$R_allRevs, breaks = -10:40)
+
+plot(summaryData$L_allRevs,summaryData$R_allRevs,xlab="Left Reversal Threshold (dB)",ylab="Right Reversal Threshold Threshold (dB)", main = 'Comparision of Left and Right - All Reversal Average') 
+curve(lin, from = -10,to = 40, add = TRUE)
+
+
+```
