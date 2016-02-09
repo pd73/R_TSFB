@@ -14,31 +14,42 @@ library("psyphy")
 library("knitr")
 library("xlsx")
 
-#SURFACE 
-#dataDir = 'C:/Users/paul allen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
-#filedir = 'C:/Users/paul allen/Dropbox/@R-working/gustometry'
-#source('C:/Users/paul allen/Dropbox/@R-working/gustometry/gustometerData.R')
-#ENT
+#ENT 
+dataDir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Smell Threshold Data Files'
+filedir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data'
+source('C:/Users/pallen/Documents/GitHub/R_TSFB/smellData.R')
+
+notefile = 'notesEGST_2016_02_05.xlsx'
+demofile = 'DemoEG_2016_02_05.xlsx'
+
+gustnotes <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', notefile),1)
+DemoEG <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', demofile),1)
+
+gustnotes$ID <- paste('TS', gustnotes$FamilyID, gustnotes$MemberID, sep ="")
+DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+
+#local ENT
 #dataDir = 'C:/Users/pallen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
 #filedir = 'C:/Users/pallen/Dropbox/@R-working/gustometry'
 #source('C:/Users/pallen/Dropbox/@R-working/gustometry/gustometerData.R')
 
 ### DNP Lab
-dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Smell Thresholds'
-filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
-notefile = 'gustonotes20141001.txt'
-demofile = 'DemoEG.csv'
-gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
-DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
-gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
-gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
-DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+# dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Smell Thresholds'
+# filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
+# notefile = 'gustonotes20141001.txt'
+# demofile = 'DemoEG.csv'
+# gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
+# DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
+# gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
+# gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
+# DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+# 
+# source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/smellData.R')
 
-source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/smellData.R')
 # define link function 
 
 allFiles = dir(dataDir, pattern ="*.xls")
-numStamps = rep(NA,length(allFiles))
+#numStamps = rep(NA,length(allFiles))
 # for (i in 1:length(allFiles)) {
 #   fileName <- paste(dataDir,"/",allFiles[i], sep='')
 #   numStamps[i] <- length(gustometerData(fileName, timeStamps = TRUE))
@@ -66,11 +77,25 @@ GuessAll <- rep(NA, length(SID))
  Rratio <- rep(NA, length(SID))
  bias <- rep(NA, length(SID))
  biasRept <- rep(NA, length(SID))
+ ceilingFlag <- rep(NA, length(SID))
+ floorFlag <- rep(NA, length(SID))
+ trackLength <- rep(NA, length(SID))
 note <- rep(NA, length(SID))
 demonote <- rep(NA, length(SID))
+thisDate <- rep(NA, length(SID))
+baseline <- rep(NA, length(SID))
+spread <- rep(NA, length(SID))
+lastfour <- rep(NA, length(SID))
+
+sst_id<- rep(NA, length(SID))
+ sst_dob <- rep(NA, length(SID))
+ sst_temp <- rep(NA, length(SID))
+ sst_testdate <- rep(NA, length(SID))
+ sst_age <- rep(NA, length(SID))
+ sst_dur <- rep(NA, length(SID))
 
 #summaryData <- data.frame(SID,gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,R_logThresh,R_logprob,R_allRevs,R_revThresh,propRight,pRight,guessRight,L_logThresh,L_logprob,L_revThresh,L_allRevs,propLeft,pLeft,guessLeft, note, demonote)
-summaryData <- data.frame(SID,gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,logThresh,logprob,Thresh,arithThresh, geoThresh, note, demonote)
+summaryData <- data.frame(SID,sst_id,sst_dob,gender,age,sst_age,group,thisDate,sst_testdate,sst_dur,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,baseline, spread, lastfour,logThresh,logprob,Thresh,arithThresh, geoThresh,ceilingFlag, floorFlag,trackLength, note, demonote)
 #summaryData <- data.frame(SID,gender,age,group,logThresh,logprob,Thresh, note, demonote)
 
 ```
@@ -93,8 +118,8 @@ We want to be able to also compare the threshold estimates from reversals and re
 out = NULL
 numtoanalyse = length(allFiles)
 for (i in 1:numtoanalyse) {
-  thisNote <- gustnotes$note[gustnotes$ID == SID[i]]
-  thisNote <- paste(thisNote, collapse="; ")
+  thisNote <- gustnotes$STTadminNotes[gustnotes$ID == SID[i]]
+ # thisNote <- paste(thisNote, collapse="; ")
   if (length(thisNote)==0) {thisNote = 'No note in the database!'}
   summaryData$note[i] <- thisNote
   
@@ -110,7 +135,9 @@ for (i in 1:numtoanalyse) {
   if (length(thisGroup)==0) {thisGroup = 'NA'} 
   summaryData$group[i] <- thisGroup
   
-  summaryData$demonote[i] <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
+ summaryData$demonote[i] <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
+ # summaryData$demonote[i] <- DemoEG$Note[DemoEG$SID == SID[i]]
+  
   #if (numStamps[i] != 2) {
 #     out = c(out, c('Skip file ', allFiles[i]), 'Note:', thisNote, '---')}
 #   else {
@@ -144,10 +171,10 @@ write.csv(summaryData, file = paste('ST_SummaryData_Draft_',Sys.Date(),".csv", s
 
 ### Summary of Smell Threshold data
 
-Obtained track data from `r length(summaryData$revThresh)-sum(is.na(summaryData$revThresh))` out of `r length(summaryData$revThresh)` records.
+Obtained track data from `r length(summaryData$arithThresh)-sum(is.na(summaryData$arithThresh))` out of `r length(summaryData$arithThresh)` records.
 
-The `r sum(is.na(summaryData$revThresh))` subjects with problematic tracks are:
-`r summaryData$SID[is.na(summaryData$revThresh)]`
+The `r sum(is.na(summaryData$arithThresh))` subjects with problematic tracks are:
+`r summaryData$SID[is.na(summaryData$arithThresh)]`
 
 \pagebreak
 
@@ -159,7 +186,7 @@ It's a metric of how well the subject 'got it'
 
 ``` {r, echo=FALSE, fig.height=5, fig.width=5}
 
-#hist(summaryData$chiSqr)
+hist(summaryData$chiSqr)
 
 ```
 \pagebreak
@@ -168,7 +195,7 @@ It's a metric of how well the subject 'got it'
 
 ``` {r, echo=FALSE, fig.height=3.5, fig.width=3.5}
 
-hist(summaryData$logThresh)#, breaks = -10:60)
+hist(summaryData$logThresh)#, breaks = -10:-2)
 
 #hist(summaryData$R_logThresh, breaks = -10:40)
 
@@ -183,7 +210,7 @@ hist(summaryData$logThresh)#, breaks = -10:60)
 # Reversals
 ```{r, echo= FALSE, fig.height=3.5, fig.width=3.5}
 
-hist(summaryData$Thresh)#, breaks = -10:10)
+hist(summaryData$Thresh, breaks = -10:-2)
 
 # hist(summaryData$R_revThresh, breaks = -10:40)
 # 

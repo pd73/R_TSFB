@@ -10,9 +10,23 @@ require(rmarkdown)
 require(ggplot2)
 require(aod)
 require(stats)
-library("psyphy", lib.loc="C:/Program Files/R/R-3.1.2/library")
-library("knitr", lib.loc="C:/Program Files/R/R-3.1.2/library")
+library("psyphy")
+library("knitr")
+library("xlsx")
 
+#ENT 
+dataDir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Electrogustometry Data Files'
+filedir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data'
+source('C:/Users/pallen/Documents/GitHub/R_TSFB/gustometerData.R')
+
+notefile = 'notesEGST_2016_02_05.xlsx'
+demofile = 'DemoEG_2016_02_05.xlsx'
+
+gustnotes <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', notefile),1)
+DemoEG <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', demofile),1)
+
+gustnotes$ID <- paste('TS', gustnotes$FamilyID, gustnotes$MemberID, sep ="")
+DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
 #SURFACE 
 #dataDir = 'C:/Users/paul allen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
 #filedir = 'C:/Users/paul allen/Dropbox/@R-working/gustometry'
@@ -22,18 +36,18 @@ library("knitr", lib.loc="C:/Program Files/R/R-3.1.2/library")
 #filedir = 'C:/Users/pallen/Dropbox/@R-working/gustometry'
 #source('C:/Users/pallen/Dropbox/@R-working/gustometry/gustometerData.R')
 
-### DNP Lab
-dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Electrogustometry'
-filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
-notefile = 'gustonotes20141001.txt'
-demofile = 'DemoEG.csv'
-gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
-DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
-gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
-gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
-DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
-
-source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/gustometerData.R')
+# ### DNP Lab
+# dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Electrogustometry'
+# filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
+# notefile = 'gustonotes20141001.txt'
+# demofile = 'DemoEG.csv'
+# gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
+# DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
+# gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
+# gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
+# DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+# 
+# source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/gustometerData.R')
 # define link function 
 
 allFiles = dir(dataDir, pattern ="*.txt")

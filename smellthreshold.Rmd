@@ -3,14 +3,22 @@
 ```{r, echo=FALSE,warning=FALSE}
 #Behind the scenes
 fileName <- paste(dataDir,"/",allFiles[i], sep='')
+thisDate <- as.numeric(file.info(fileName)$mtime)/24/3600+25569
 trialTracks <- smellData(fileName)
 
 track <- trialTracks$track
+baseline <- trialTracks$thresh[2]
+
+startAnalysis <- which(track == baseline)[1]
+
+if (-2 %in% track) {ceilingFlag <- TRUE; cfText <- '**WARNING track hits ceiling**'} else {ceilingFlag <- FALSE; cfText <- ''}
+if (-10 %in% track) {floorFlag <- TRUE; ffText <- 'NB track hits floor'} else {floorFlag <- FALSE; ffText <-''}
+
 nTrack <- length(trialTracks$track)
 
 # this gets the data ready for the probit fit
-xdat <- c(track,-20, 50)
-ydat <- c(trialTracks$corr,0,1)
+xdat <- c(track[startAnalysis:nTrack],-12, 0)
+ydat <- c(trialTracks$corr[startAnalysis:nTrack],0,1)
 
 levs <- sort(unique(xdat))
 correct <- rep(0, length(levs))
@@ -29,11 +37,11 @@ g <- glm(cbind(correct, incorrect) ~ levs,family=binomial(mafc.logit(2)),dat)
 pLog <- with(g, pchisq(null.deviance - deviance, df.null - df.residual, lower.tail = FALSE))
 
 # Add here the bias calculation and responding at chance Calculation
-nFirst <- sum(trialTracks$stim == 'Odor')
-nSecond <- sum(trialTracks$stim == 'Blank')
+nFirst <- sum(trialTracks$stim[startAnalysis:nTrack] == 'Odor')
+nSecond <- sum(trialTracks$stim[startAnalysis:nTrack] == 'Blank')
 
-rFirst <- sum(trialTracks$resp == 'First')
-rSecond <- sum(trialTracks$resp == 'Second')
+rFirst <- sum(trialTracks$resp[startAnalysis:nTrack] == 'First')
+rSecond <- sum(trialTracks$resp[startAnalysis:nTrack] == 'Second')
 
 fractionFS<- nFirst/(nFirst+nSecond)
  biasp <- binom.test(c(rFirst, rSecond), p = fractionFS)
@@ -44,14 +52,27 @@ fractionFS<- nFirst/(nFirst+nSecond)
  levels(trialTracks$stim) <- c("Blank", "Odor")
  levels(trialTracks$resp) <- c("First", "Second")
  
- chisqr<- chisq.test(table(trialTracks$stim,trialTracks$resp))
+ chisqr<- chisq.test(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
 #                    
  summaryData$chiSqr[i] <- chisqr$statistic
  summaryData$pchi[i] <- chisqr$p.value
  summaryData$Rratio[i] <- rFirst/(rFirst + rSecond)
  summaryData$bias[i] <- biasp$p.value
  summaryData$biasRept[i] <- biasResp
-
+ summaryData$ceilingFlag[i] <- ceilingFlag
+ summaryData$floorFlag[i] <- floorFlag
+ summaryData$trackLength[i] <- nTrack
+ summaryData$thisDate[i] <- thisDate
+ summaryData$baseline[i] <- baseline
+ summaryData$lastfour[i] <- mean(trialTracks$track[(nTrack-3):nTrack])
+ 
+ summaryData$sst_id[i] <- as.character(trialTracks$info[1])
+ summaryData$sst_dob[i] <- as.character(trialTracks$info[2])
+ summaryData$sst_temp[i] <- as.character(trialTracks$info[5])
+ summaryData$sst_testdate[i] <- as.character(trialTracks$info[8])
+ summaryData$sst_age[i] <- as.character(trialTracks$info[9])
+ summaryData$sst_dur[i] <- as.character(trialTracks$info[10])
+ 
 thresh <- trialTracks$thresh[1]
 # sometimes Threshold is incorrectly positive (this is because of the geo mean)
 if (thresh > 0) {thresh <- -thresh}
@@ -61,6 +82,7 @@ nRevs <- length(threshTrack)
 if (nRevs > 3){
 summaryData$arithThresh[i] <- mean(threshTrack[(nRevs-4):nRevs])
 summaryData$geoThresh[i] <- -exp(mean(log(abs(threshTrack[(nRevs-4):nRevs]))))
+ summaryData$spread[i] <- sd(threshTrack[(nRevs-4):nRevs])
 } else {
   summaryData$arithThresh[i] <- 0
   summaryData$geoThresh[i] <- 0
@@ -88,30 +110,19 @@ summaryData$GuessAll[i] <- GuessAll
 
 ```
 
-
+Table of Stimulus in 1st interval vs Response of which interval contained odor after start of baseline
 ```{r, results="asis", echo=FALSE}
- kable(table(trialTracks$resp,trialTracks$stim))
-#table(trialTracks$stim,trialTracks$resp)
-#chisq.test(table(trialTracks$stim,trialTracks$resp))
-#Leftbinomial <- binom.test(corLeft, nLeft, 0.5)
-#Rightbinomial <- binom.test(corRight, nRight, 0.5)
+ kable(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
 ```
- 
-**Chi-Square for both tracks is `r chisqr$statistic`, so this subject is `r GuessAll` (p = `r chisqr$p.value`)**
 
-**The subject's response ratio was `r rFirst/(rFirst + rSecond)*100`% First and so probably `r biasResp` (p = `r biasp$p.value`)**
- 
-**Note on session: `r thisNote`**
-
-**Note on subject: `r summaryData$demonote[i]`**
- 
- 
+* Blank-Second & Odor-First are correct reponses, Blank-First & Odor-Second are incorrect responses
 ```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
-
-plot(1:nTrack,track, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-10,0), main = 'Track')
+plot(1:nTrack,track, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-10,-2), main = 'Track')
 
 lines(c(1,nTrack),c(thresh,thresh), col = "black", lty = 1)
 lines(c(1,nTrack),c(logThresh, logThresh), col = "red")
+lines(c(startAnalysis,startAnalysis),c(-2, -10), col = "green")
+
 
 plot(dat$levs,dat$fraction,xlab="Stim Level",ylab="Fraction Correct", main = 'Track Logistic Fit',ylim=c(0,1), xlim= c(dat$levs[2]-1, dat$levs[length(dat$levs)-1]+1)) 
 
@@ -120,8 +131,17 @@ lines(c(thresh,thresh),c(0,1), col = "black", lty = 1)
 lines(c(logThresh,logThresh),c(0,1), col = "red")
 ```
 
-* The 75% point of the logistic regression is `r logThresh` dB and the fit is `r ThresSig`nificanctly different to a flat line.
-* The geometric mean threshold is `r thresh` dB, while the arithmetic mean threshold is `r summaryData$arithThresh[i]` dB.
+* Baseline was established at `r baseline` dB, with threshold `r sprintf("%.1f",thresh)` dB
+
+* Chi-Square for the track is `r sprintf("%.1f",chisqr$statistic)`, so this subject is `r GuessAll` (p = `r sprintf("%.3f",chisqr$p.value)`)
+* The subject's response ratio was `r sprintf("%.1f",rFirst/(rFirst + rSecond)*100)`% first-interval and so probably `r biasResp` (p = `r sprintf("%.3f",biasp$p.value)`)
+
+* The 75% point of the logistic regression on the track after baseline is `r sprintf("%.1f",logThresh)` dB and the fit is `r ThresSig`nificanctly different to a flat line.
+* The geometric mean threshold of all reversals is `r sprintf("%.1f",summaryData$geoThresh[i])` dB and the arithmetic mean threshold is `r sprintf("%.1f",summaryData$arithThresh[i])` dB.
+* The length of the track is `r nTrack` trials. `r cfText` `r ffText`
+ 
+* Note on session: `r thisNote`
+* Note on subject: `r summaryData$demonote[i]`
 
 ---
 
