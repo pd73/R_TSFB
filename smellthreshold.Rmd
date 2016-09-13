@@ -29,7 +29,7 @@ for (j in 1:length(levs)) {
   correct[j] <- sum(ydat[xdat == levs[j]])
   incorrect[j] <- sum(1-ydat[xdat == levs[j]])
   fraction[j] <- correct[j] /(correct[j] +incorrect[j])
-  }
+}
 
 dat <- as.data.frame(cbind(levs,correct,incorrect,fraction))
 g <- glm(cbind(correct, incorrect) ~ levs,family=binomial(mafc.logit(2)),dat)
@@ -44,84 +44,105 @@ rFirst <- sum(trialTracks$resp[startAnalysis:nTrack] == 'First')
 rSecond <- sum(trialTracks$resp[startAnalysis:nTrack] == 'Second')
 
 fractionFS<- nFirst/(nFirst+nSecond)
- biasp <- binom.test(c(rFirst, rSecond), p = fractionFS)
- if (biasp$p.value < 0.05) {
-   biasResp <- "biased"
- } else {biasResp <- "not biased"}
- 
- levels(trialTracks$stim) <- c("Blank", "Odor")
- levels(trialTracks$resp) <- c("First", "Second")
- 
- chisqr<- chisq.test(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
+biasp <- binom.test(c(rFirst, rSecond), p = fractionFS)
+if (biasp$p.value < 0.05) {
+  biasResp <- "biased"
+} else {biasResp <- "not biased"}
+
+levels(trialTracks$stim) <- c("Blank", "Odor")
+levels(trialTracks$resp) <- c("First", "Second")
+
+chisqr<- chisq.test(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
 #                    
- summaryData$chiSqr[i] <- chisqr$statistic
- summaryData$pchi[i] <- chisqr$p.value
- summaryData$Rratio[i] <- rFirst/(rFirst + rSecond)
- summaryData$bias[i] <- biasp$p.value
- summaryData$biasRept[i] <- biasResp
- summaryData$ceilingFlag[i] <- ceilingFlag
- summaryData$floorFlag[i] <- floorFlag
- summaryData$trackLength[i] <- nTrack
- summaryData$thisDate[i] <- thisDate
- summaryData$baseline[i] <- baseline
- summaryData$lastfour[i] <- mean(trialTracks$track[(nTrack-3):nTrack])
- 
- summaryData$sst_id[i] <- as.character(trialTracks$info[1])
- summaryData$sst_dob[i] <- as.character(trialTracks$info[2])
- summaryData$sst_temp[i] <- as.character(trialTracks$info[5])
- summaryData$sst_testdate[i] <- as.character(trialTracks$info[8])
- summaryData$sst_age[i] <- as.character(trialTracks$info[9])
- summaryData$sst_dur[i] <- as.character(trialTracks$info[10])
- 
+summaryData$chiSqr[i] <- chisqr$statistic
+summaryData$pchi[i] <- chisqr$p.value
+summaryData$Rratio[i] <- rFirst/(rFirst + rSecond)
+summaryData$bias[i] <- biasp$p.value
+summaryData$biasRept[i] <- biasResp
+summaryData$ceilingFlag[i] <- ceilingFlag
+summaryData$floorFlag[i] <- floorFlag
+summaryData$trackLength[i] <- nTrack
+summaryData$baseline[i] <- baseline
+summaryData$lastfour[i] <- mean(trialTracks$track[(nTrack-3):nTrack])
+
+summaryData$sst_temp[i] <- as.character(trialTracks$info[5])
+summaryData$sst_age[i] <- as.character(trialTracks$info[9])
+
 thresh <- trialTracks$thresh[1]
+
 # sometimes Threshold is incorrectly positive (this is because of the geo mean)
 if (thresh > 0) {thresh <- -thresh}
 threshTrack <- trialTracks$thresh[3:length(trialTracks$thresh)]
 threshTrack <- threshTrack[is.na(threshTrack) == F]
 nRevs <- length(threshTrack)
-if (nRevs > 3){
-summaryData$arithThresh[i] <- mean(threshTrack[(nRevs-4):nRevs])
-summaryData$geoThresh[i] <- -exp(mean(log(abs(threshTrack[(nRevs-4):nRevs]))))
- summaryData$spread[i] <- sd(threshTrack[(nRevs-4):nRevs])
-} else {
-  summaryData$arithThresh[i] <- 0
-  summaryData$geoThresh[i] <- 0
-  }
+summaryData$spread[i] <- sd(threshTrack[(nRevs-4):nRevs])
 
 logThresh <- -coef(g)[1] / coef(g)[2]
 
 summaryData$logThresh[i] <- logThresh
 summaryData$logprob[i] <- pLog
+summaryData$threshdiff[i] <- logThresh-thresh
 
 if (pLog < 0.05) {
   ThresSig = "sig"} else { ThresSig = "not sig"}
-summaryData$Thresh[i] <- thresh
+summaryData$thresh[i] <- thresh
 
- if (is.na(chisqr$p.value)) {
-   GuessAll <- "fully biased"
+if (is.na(chisqr$p.value)) {
+  GuessAll <- "fully biased"
 } else if (chisqr$p.value < 0.05) {
   GuessAll <- "not guessing"
 } else {
   GuessAll <- "maybe guessing!"
   if (chisqr$statistic < 1) {GuessAll <- "surely guessing"}
-  }
+}
 
 summaryData$GuessAll[i] <- GuessAll
+
+### ALGORITHM for checking Smell Threshold
+# 1)	Chi square < 1, 'surely guessing', set Thresh = -1.5
+# 2)	Logistic fit with threshold <=-10, set Thresh = -10.5
+# 3)	Track threshold -10, set Thresh to -10.5; -2 set Thresh to -1.5
+# 4)	Reverals SD <= 0.5, set Thresh to track threshold
+# 5)	logistic fit  good (p<0.1) and difference between logistic and track threshold is less than 1dB,  set Thresh to track threshold
+# 6)	Remainder set thresh to mean of last four trials
+if (chisqr$statistic < 1) {
+  algo_thresh <- -1.5
+  algo_stage <- 'Chi square less than 1.'
+} else if (logThresh <= -10) {
+  algo_thresh <- -10.5
+  algo_stage <- 'Responses better than -10.'
+} else if (thresh == -2) {
+  algo_thresh <- -1.5
+  algo_stage <- 'Responses worse than -2.'
+} else if (summaryData$spread[i] <= 0.5) {
+  algo_thresh <- thresh
+  algo_stage <- 'Reversals are very tight.'
+} else if (pLog < 0.1 & abs(summaryData$threshdiff[i]) < 1) {
+  algo_thresh <- thresh
+  algo_stage <- 'Psych function and Track Agree.'
+} else {
+  algo_thresh <- summaryData$lastfour[i]
+  algo_stage <- 'Last Four trials describes best.'
+}
+
+summaryData$algo_thresh[i] <- algo_thresh
+summaryData$algo_type[i] <- algo_stage
 
 ```
 
 Table of Stimulus in 1st interval vs Response of which interval contained odor after start of baseline
 ```{r, results="asis", echo=FALSE}
- kable(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
+kable(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
 ```
 
-* Blank-Second & Odor-First are correct reponses, Blank-First & Odor-Second are incorrect responses
+* Blank-Second & Odor-First are correct responses, Blank-First & Odor-Second are incorrect responses
 ```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
-plot(1:nTrack,track, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-10,-2), main = 'Track')
+plot(1:nTrack,track, col=trialTracks$corr+2, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-11,-1), main = 'Track')
 
 lines(c(1,nTrack),c(thresh,thresh), col = "black", lty = 1)
 lines(c(1,nTrack),c(logThresh, logThresh), col = "red")
 lines(c(startAnalysis,startAnalysis),c(-2, -10), col = "green")
+lines(c(nTrack-5,nTrack),c(algo_thresh,algo_thresh), col = "blue", lwd = 3, lty = 2)
 
 
 plot(dat$levs,dat$fraction,xlab="Stim Level",ylab="Fraction Correct", main = 'Track Logistic Fit',ylim=c(0,1), xlim= c(dat$levs[2]-1, dat$levs[length(dat$levs)-1]+1)) 
@@ -129,19 +150,21 @@ plot(dat$levs,dat$fraction,xlab="Stim Level",ylab="Fraction Correct", main = 'Tr
 curve(predict(g,data.frame(levs=x),type="resp"),add=TRUE,col = "red")
 lines(c(thresh,thresh),c(0,1), col = "black", lty = 1)
 lines(c(logThresh,logThresh),c(0,1), col = "red")
+lines(c(algo_thresh,algo_thresh),c(0,1), col = "blue", lwd = 3, lty = 2)
 ```
 
 * Baseline was established at `r baseline` dB, with threshold `r sprintf("%.1f",thresh)` dB
+* The Algorithm suggests a threshold of `r sprintf("%.1f",algo_thresh)` dB because `r algo_stage`
 
 * Chi-Square for the track is `r sprintf("%.1f",chisqr$statistic)`, so this subject is `r GuessAll` (p = `r sprintf("%.3f",chisqr$p.value)`)
+* From the responses we can estimate a ``r sprintf("%.1f",(1-chisqr$p.value)*100)``% chance that the subject is responding to the stimulus.
 * The subject's response ratio was `r sprintf("%.1f",rFirst/(rFirst + rSecond)*100)`% first-interval and so probably `r biasResp` (p = `r sprintf("%.3f",biasp$p.value)`)
 
-* The 75% point of the logistic regression on the track after baseline is `r sprintf("%.1f",logThresh)` dB and the fit is `r ThresSig`nificanctly different to a flat line.
-* The geometric mean threshold of all reversals is `r sprintf("%.1f",summaryData$geoThresh[i])` dB and the arithmetic mean threshold is `r sprintf("%.1f",summaryData$arithThresh[i])` dB.
+* The 75% point of the logistic regression on the track after baseline is `r sprintf("%.1f",logThresh)` dB and the fit is `r ThresSig`nificantly different to a flat line.
+
 * The length of the track is `r nTrack` trials. `r cfText` `r ffText`
- 
-* Note on session: `r thisNote`
-* Note on subject: `r summaryData$demonote[i]`
+
+* Note on subject: `r demonote`
 
 ---
 

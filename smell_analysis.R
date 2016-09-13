@@ -1,16 +1,37 @@
 library("ez")
 library("dplyr")
+library(foreign)
 
 dataDir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data'
 filedir = 'X:/Research/BennettoLab/TSFB Study/Data/exported from filemaker'
 smellexport <- 'TSFB_SMELL_EXPORT.xlsx'
 smellthreshfile <- 'ST_SummaryData_2016-02-19.xlsx'
+smelloutputfile <- 'ST_Data_2016-02-23.xlsx'
 
 smell <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', smellexport),1)
 smellthresh <-  read.xlsx(paste(sep = "", collapse = NULL, dataDir, '/', smellthreshfile),1)
 
-FamilyID <- as.character(smell$FamilyID)
-SID <- paste('TS', FamilyID, smell$memberID, sep ="")
+smell$dem.recordID[duplicated(smell$dem.recordID)]
+
+availsmell <- filter(smell, smell$Dem.recordID %in% smellthresh$SID)
+availsmell$Dem.recordID[duplicated(availsmell$Dem.recordID)]
+
+#Problem IDS
+smellthresh$SID[as.logical(1-smellthresh$SID %in% smell$Dem.recordID )]
+# here I removed 1162 B and C
+
+
+
+for (i in 1:length(smellthresh[,1])) {
+  availsmell$stt_thresh[availsmell$Dem.recordID==as.character(smellthresh$SID[i])]= smellthresh$algo_thresh[i]
+  availsmell$stt_algo[availsmell$Dem.recordID==as.character(smellthresh$SID[i])]= smellthresh$algo_type[i]
+}
+
+write.xlsx(availsmell, file = paste(sep = "", collapse = NULL, dataDir, '/', smelloutputfile))
+#write.foreign(availsmell, paste(sep = "", collapse = NULL, dataDir, '/', 'smelldata.txt'), paste(sep = "", collapse = NULL, dataDir, '/', 'smellsyntax.sps'), package = "SPSS")
+###
+FamilyID <- as.character(smell$dem.familyID)
+SID <- paste('TS', FamilyID, smell$dem.memberID, sep ="")
 group <- paste(smell$Group, smell$tyoe, sep = "_")
 
 smelldata <- data.frame(SID, FamilyID, smell$gender, smell$Age, group, smell$smell_SCORE)

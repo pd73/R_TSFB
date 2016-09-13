@@ -6,106 +6,68 @@ output: html_document
 ---
 ### About this document
 ```{r,  echo=FALSE, include=FALSE}
-require(rmarkdown)
-require(ggplot2)
-require(aod)
-require(stats)
+library("rmarkdown")
+library("ggplot2")
+library("aod")
+library("stats")
 library("psyphy")
 library("knitr")
 library("xlsx")
 
-#ENT 
+#ENT - settings to run script from main work computer
 dataDir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Smell Threshold Data Files'
 filedir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data'
 source('C:/Users/pallen/Documents/GitHub/R_TSFB/smellData.R')
 
-notefile = 'notesEGST_2016_02_05.xlsx'
 demofile = 'DemoEG_2016_02_05.xlsx'
-
-gustnotes <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', notefile),1)
 DemoEG <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', demofile),1)
-
-gustnotes$ID <- paste('TS', gustnotes$FamilyID, gustnotes$MemberID, sep ="")
 DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
 
-#local ENT
-#dataDir = 'C:/Users/pallen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
-#filedir = 'C:/Users/pallen/Dropbox/@R-working/gustometry'
-#source('C:/Users/pallen/Dropbox/@R-working/gustometry/gustometerData.R')
-
-### DNP Lab
-# dataDir = 'S:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Smell Thresholds'
-# filedir = 'C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry'
-# notefile = 'gustonotes20141001.txt'
-# demofile = 'DemoEG.csv'
-# gustnotes <-  read.delim(paste(sep = "", collapse = NULL, filedir, '/', notefile), stringsAsFactors=FALSE)
-# DemoEG <- read.csv("C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/DemoEG.csv")
-# gustnotes$note <- paste(gustnotes$Note1, gustnotes$Note2, gustnotes$Note3)
-# gustnotes$ID <- paste('TS', gustnotes$Idnum, gustnotes$Idletter, sep ="")
-# DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
-# 
-# source('C:/Users/pallen/Desktop/Dropbox/@R-working/gustometry/smellData.R')
-
-# define link function 
-
 allFiles = dir(dataDir, pattern ="*.xls")
-#numStamps = rep(NA,length(allFiles))
-# for (i in 1:length(allFiles)) {
-#   fileName <- paste(dataDir,"/",allFiles[i], sep='')
-#   numStamps[i] <- length(gustometerData(fileName, timeStamps = TRUE))
-#   }
-# timeStampData = data.frame(
-#   id = allFiles
-#   #ntimes = numStamps
-#   )
+
 SID <- substr(allFiles, start = 1, stop = 7)
 gender <- rep(NA, length(SID))
-age <- rep(NA, length(SID))
+sst_age <- rep(NA, length(SID))
 group <- rep(NA, length(SID))
-logThresh <- rep(NA, length(SID))
-logprob <- rep(NA, length(SID))
-Thresh <- rep(NA, length(SID))
-chiSqr <- rep(NA, length(SID))
-GuessAll <- rep(NA, length(SID))
- arithThresh <- rep(NA, length(SID))
- geoThresh <- rep(NA, length(SID))
-# propLeft <- rep(NA, length(SID))
-# pLeft <- rep(NA, length(SID))
-# propRight <- rep(NA, length(SID))
-# pRight <- rep(NA, length(SID))
- pchi <- rep(NA, length(SID))
- Rratio <- rep(NA, length(SID))
- bias <- rep(NA, length(SID))
- biasRept <- rep(NA, length(SID))
- ceilingFlag <- rep(NA, length(SID))
- floorFlag <- rep(NA, length(SID))
- trackLength <- rep(NA, length(SID))
-note <- rep(NA, length(SID))
-demonote <- rep(NA, length(SID))
-thisDate <- rep(NA, length(SID))
+algo_thresh<- rep(NA, length(SID))
+algo_type<- rep(NA, length(SID))
 baseline <- rep(NA, length(SID))
+chiSqr <- rep(NA, length(SID))
+pchi <- rep(NA, length(SID))
+GuessAll <- rep(NA, length(SID))
+Rratio <- rep(NA, length(SID))
+bias <- rep(NA, length(SID))
+biasRept <- rep(NA, length(SID))
+thresh <- rep(NA, length(SID))
 spread <- rep(NA, length(SID))
 lastfour <- rep(NA, length(SID))
+logThresh <- rep(NA, length(SID))
+logprob <- rep(NA, length(SID))
+threshdiff <- rep(NA, length(SID))
+ceilingFlag <- rep(NA, length(SID))
+floorFlag <- rep(NA, length(SID))
+trackLength <- rep(NA, length(SID))
+sst_temp <- rep(NA, length(SID))
 
-sst_id<- rep(NA, length(SID))
- sst_dob <- rep(NA, length(SID))
- sst_temp <- rep(NA, length(SID))
- sst_testdate <- rep(NA, length(SID))
- sst_age <- rep(NA, length(SID))
- sst_dur <- rep(NA, length(SID))
-
-#summaryData <- data.frame(SID,gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,R_logThresh,R_logprob,R_allRevs,R_revThresh,propRight,pRight,guessRight,L_logThresh,L_logprob,L_revThresh,L_allRevs,propLeft,pLeft,guessLeft, note, demonote)
-summaryData <- data.frame(SID,sst_id,sst_dob,gender,age,sst_age,group,thisDate,sst_testdate,sst_dur,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,baseline, spread, lastfour,logThresh,logprob,Thresh,arithThresh, geoThresh,ceilingFlag, floorFlag,trackLength, note, demonote)
-#summaryData <- data.frame(SID,gender,age,group,logThresh,logprob,Thresh, note, demonote)
-
+summaryData <- data.frame(SID,gender,sst_age,group,algo_thresh, algo_type,baseline, chiSqr,pchi,GuessAll,Rratio,bias,biasRept, thresh, spread, lastfour,logThresh,logprob,threshdiff,ceilingFlag, floorFlag,trackLength, sst_temp)
 ```
 
 
 This document compiles the current Smell Threshold data in a format that will allow rapid evaluation of the data from each subject.
 
-It is important to be able to at a glace see the track information, and then also the logistic regression estimates on this data.
+It is important to be able to at a glace see the track information (Left hand plot), and then also the logistic regression estimates on this data (right hand plot).
 
-We want to be able to also compare the threshold estimates from reversals and regression and whether subjects are likely guessing or biased in their responses.
+We want to be able to also compare the threshold estimates from reversals and regression and whether subjects are likely guessing or biased in their responses. The Threshold determined from the track is represented by the black lines. The Threshold estimated from logistic regression is represented by the the red lines. The Green line represents the start of the stable baseline and the dashed blue represents the algorithmicly determined threshold for this subject.
+
+The current algorithm is:
+
+1)	Chi square < 1, 'surely guessing' none of these are responding to the stimulus, set Thresh = -1.5
+2)	Logistic fit with threshold <=-10, these are all steller, set Thresh = -10.5
+3)	Examine track threshold and any that are at -10, set Thresh to -10.5, -2 set Thresh to -1.5. These all had all reversals at this level so either very good or very bad.
+4)	If standard deviation of reversals is less than 0.5, set Thresh to track threshold because the reversals are very tight.
+5)	If logistic fit is good (p<0.1) and difference between logistic and track threshold is less than 1dB, then set Thresh to track threshold
+6)	Remainder are well- described by the mean of the last four trials but not by the track threshold
+
 
 ---
 
@@ -118,68 +80,38 @@ We want to be able to also compare the threshold estimates from reversals and re
 out = NULL
 numtoanalyse = length(allFiles)
 for (i in 1:numtoanalyse) {
-  thisNote <- gustnotes$STTadminNotes[gustnotes$ID == SID[i]]
- # thisNote <- paste(thisNote, collapse="; ")
-  if (length(thisNote)==0) {thisNote = 'No note in the database!'}
-  summaryData$note[i] <- thisNote
   
   thisGender <- as.character(DemoEG$Gender[DemoEG$SID == SID[i]])
   if (length(thisGender)==0) {thisGender = 'NA'}  
   summaryData$gender[i] <- thisGender
   
-  thisAge <- DemoEG$Age[DemoEG$SID == SID[i]]
-  if (length(thisAge)==0) {thisAge = 'NA'} 
-  summaryData$age[i] <- thisAge
-  
   thisGroup <- DemoEG$type[DemoEG$SID == SID[i]]
   if (length(thisGroup)==0) {thisGroup = 'NA'} 
   summaryData$group[i] <- thisGroup
   
- summaryData$demonote[i] <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
- # summaryData$demonote[i] <- DemoEG$Note[DemoEG$SID == SID[i]]
+  demonote <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
   
-  #if (numStamps[i] != 2) {
-#     out = c(out, c('Skip file ', allFiles[i]), 'Note:', thisNote, '---')}
-#   else {
-    out = c(out,knit_child('smellthreshold.Rmd'))
-#     }
-  }
+  out = c(out,knit_child('smellthreshold.Rmd'))
+}
 
 write.csv(summaryData, file = paste('ST_SummaryData_Draft_',Sys.Date(),".csv", sep = ''))
-
-# summaryData$L_logThresh[summaryData$L_logThresh < -6] <- -10
-# summaryData$R_logThresh[summaryData$R_logThresh < -6] <- -10
-# summaryData$L_logThresh[summaryData$L_logThresh > 36] <- 40
-# summaryData$R_logThresh[summaryData$R_logThresh > 36] <- 40
-# 
-# summaryData$L_revThresh[summaryData$L_revThresh < -6] <- -10
-# summaryData$R_revThresh[summaryData$R_revThresh < -6] <- -10
-# summaryData$L_revThresh[summaryData$L_revThresh > 36] <- 40
-# summaryData$R_revThresh[summaryData$R_revThresh > 36] <- 40
-# 
-# summaryData$L_allRevs[summaryData$L_allRevs < -6] <- -10
-# summaryData$R_allRevs[summaryData$R_allRevs < -6] <- -10
-# summaryData$L_allRevs[summaryData$L_allRevs > 36] <- 40
-# summaryData$R_allRevs[summaryData$R_allRevs > 36] <- 40
-
-
 ```
 `r paste(out ,collapse = '\n')`
 
-
-
-
 ### Summary of Smell Threshold data
 
-Obtained track data from `r length(summaryData$arithThresh)-sum(is.na(summaryData$arithThresh))` out of `r length(summaryData$arithThresh)` records.
+Obtained track data from `r length(summaryData$threshdiff)-sum(is.na(summaryData$threshdiff))` out of `r length(summaryData$threshdiff)` records.
 
-The `r sum(is.na(summaryData$arithThresh))` subjects with problematic tracks are:
-`r summaryData$SID[is.na(summaryData$arithThresh)]`
+The `r sum(is.na(summaryData$threshdiff))` subjects with problematic tracks are:
+`r summaryData$SID[is.na(summaryData$threshdiff)]`
+
+Duplicated subject IDs
+`r summaryData$SID[duplicated(summaryData$SID)]`
 
 \pagebreak
 
 
-## Histograms and Correlations (or lack of...)
+## Histograms
 # Chi-Square
 Large chi-square indicates responses matched the stimuli
 It's a metric of how well the subject 'got it'
@@ -191,31 +123,23 @@ hist(summaryData$chiSqr)
 ```
 \pagebreak
 
-# Logistic
+# Algoritm Thresholds
 
 ``` {r, echo=FALSE, fig.height=3.5, fig.width=3.5}
 
-hist(summaryData$logThresh)#, breaks = -10:-2)
+hist(summaryData$algo_thresh, breaks = -11:-1)
 
-#hist(summaryData$R_logThresh, breaks = -10:40)
-
-# plot(summaryData$logThresh,summaryData$R_logThresh,xlab="Left Logistic Fit Threshold (dB)",ylab="Right Logistic Fit Threshold (dB)", main = 'Comparision of Left and Right - Logistic Fit') 
-# lin <- function(x) x
-# curve(lin, from = -10, to = 40, add = TRUE)
 ```
 
 \pagebreak
 
 
-# Reversals
+# Raw Reversal Thresholds
 ```{r, echo= FALSE, fig.height=3.5, fig.width=3.5}
 
-hist(summaryData$Thresh, breaks = -10:-2)
+hist(summaryData$thresh, breaks = -10:-2)
 
-# hist(summaryData$R_revThresh, breaks = -10:40)
-# 
-# plot(summaryData$L_revThresh,summaryData$R_revThresh,xlab="Left Reversal Threshold (dB)",ylab="Right Reversal Threshold Threshold (dB)", main = 'Comparision of Left and Right - Reversal Threshold') 
-# curve(lin, from = -10, to = 40, add = TRUE)
+
 ```
 
 
