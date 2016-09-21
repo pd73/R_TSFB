@@ -1,0 +1,53 @@
+```{r, echo=FALSE,warning=FALSE}
+  if (i<10) {numstr <- paste("0",as.character(i), sep ="")
+  } else {numstr <- as.character(i)}
+```
+  
+# Taste Responses to Taste Strip number `r numstr` : `r tastelist[i]` level `r as.character(levellist[i])`
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+  data <- na.omit(eval(parse(text = paste0("tastestrips$TasteStrip.",numstr,"response"))))
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5),
+       main = "Taste Responses",
+       xlab = "Response: Sweet, Sour, Salty, Bitter"
+  )
+
+  data <- na.omit(as.integer(eval(parse(text = paste0("tastestrips$TasteStrip.",numstr,"intensity")))))
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
+       main = "All Intensity Responses",
+       xlab = "Intensity Rating: 0, 1, 2, 3, 4, 5, 6, 7"
+  )
+medAll <- median(data)
+```
+
+### Intensity Responses to correct and incorrect responses
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+  data <- na.omit(as.integer(eval(parse(text = paste0("tastestrips$TasteStrip.",numstr,"intensity[tastestrips$TasteStrip.",numstr,"score == 1]")))))
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
+       main = "Corrected Responses - Intensity",
+       xlab = "Intensity Rating: 0, 1, 2, 3, 4, 5, 6, 7"
+  )
+  ncorr <- length(data)
+  medCorr <- median(data)
+  meanCorr <- mean(data)
+  stCorr <- sd(data)
+
+  data <- na.omit(as.integer(eval(parse(text = paste0("tastestrips$TasteStrip.",numstr,"intensity[tastestrips$TasteStrip.",numstr,"score == 0]")))))
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
+       main = "Incorrect Responses - Intensity",
+       xlab = "Intensity Rating: 0, 1, 2, 3, 4, 5, 6, 7"
+  )
+  nincorr <- length(data)
+  medinCorr <- median(data)
+```  
+
+For strip number `r i`, `r ncorr` responded correctly that the strip was `r tastelist[i]`
+
+Their median estimated intensity was `r medCorr` - Mean: `r sprintf("%.1f",meanCorr)`, SD: `r sprintf("%.1f",stCorr)`
+
+`r nincorr` responded incorrectly and they had a median intensity estimate of `r medinCorr`.
+  
+***

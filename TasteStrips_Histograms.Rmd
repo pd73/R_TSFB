@@ -1,0 +1,96 @@
+---
+title: "TSFB in ASD: Taste Strips - DRAFT Report"
+author: "Paul D Allen"
+date: '`r date()`'
+output: html_document
+---
+### About this document
+```{r,  echo=FALSE, include=FALSE}
+require(rmarkdown)
+# require(ggplot2)
+# require(aod)
+# require(stats)
+# library("psyphy")
+library("knitr")
+library("xlsx")
+
+fileDir = 'C:/Users/pallen/Box Sync/Developmental Neuropsych Lab Management/Bennetto Lab Writing/Taste in ASD Paper'
+demofile = 'tastestrips_intensit_19SEP2016.xlsx'
+
+tastestrips <-  read.xlsx(paste(sep = "", collapse = NULL, fileDir, '/', demofile),1)
+tastestrips$group <- paste(tastestrips$TSFB_Demographics..dem.research.group, tastestrips$TSFB_Demographics..dem.pedPosition, sep = "_")
+
+tastelist <- c("Sweet", "Bitter", "Salty", "Sour", "Salty", "Sour", "Bitter", "Sweet", "Sour", "Blank",
+               "Sweet", "Bitter", "Salty", "Sweet", "Sour", "Bitter", "Salty", "Blank", "Sour","Sweet",
+               "Blank", "Salty", "Bitter", "Sweet", "Sour", "Blank", "Bitter", "Salty", "Sweet", "Sour",
+               "Salty", "Bitter", "Sweet", "Sour", "Bitter", "Salty")
+levellist <-c(1,1,1,1,1,1,1,1,2,0,
+              2,2,2,2,2,2,2,0,3,3,
+              0,3,3,3,3,0,3,3,4,4,
+              4,4,4,4,4,4)
+
+```
+
+
+This document provides an overview of the responses to the TSFB Taste Strips.
+
+---
+
+## Item Data
+
+``` {r, echo = FALSE, include=FALSE,warning=FALSE}
+out = NULL
+
+numtoanalyse = 36
+
+for (i in 1:numtoanalyse) { 
+  out = c(out,knit_child('tastestripitems.Rmd'))
+}
+```
+`r paste(out ,collapse = '\n')`
+
+# PTC responses 
+
+## Control Paper
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+  data <- tastestrips$TasteStrip.PTCControlResponse
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5),
+       main = "Taste Responses",
+       xlab = "Response: Sweet, Sour, Salty, Bitter"
+  )
+
+   data <- tastestrips$TasteStrip.PTCControlIntensity
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
+       main = "Intensity Responses",
+       xlab = "Intensity Rating: 0, 1, 2, 3, 4, 5, 6, 7"
+  )
+
+```
+
+## PTC Paper
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+  data <- tastestrips$TasteStrip.PTCPaperResponse
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5),
+       main = "Taste Responses",
+       xlab = "Response: Sweet, Sour, Salty, Bitter"
+  )
+
+   data <- tastestrips$TasteStrip.PTCPaperIntensity
+  
+  hist(data, breaks = c(-0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5, 9.5),
+       main = "Intensity Responses",
+       xlab = "Intensity Rating: 0, 1, 2, 3, 4, 5, 6, 7"
+  )
+
+```
+
+## PTC-Control Intensity Difference Score
+```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
+  PTC_Diff <- tastestrips$TasteStrip.PTCPaperIntensity - tastestrips$TasteStrip.PTCControlIntensity
+  
+  hist(PTC_Diff)
+```
+  
