@@ -1,4 +1,4 @@
-### Subject `r substr(allFiles[i],3,7)` Smell Threshold Report
+## Subject `r substr(allFiles[i],3,7)` Smell Threshold Report
 
 ```{r, echo=FALSE,warning=FALSE}
 #Behind the scenes
@@ -53,9 +53,13 @@ levels(trialTracks$stim) <- c("Blank", "Odor")
 levels(trialTracks$resp) <- c("First", "Second")
 
 chisqr<- chisq.test(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
+whole_chisqr<- chisq.test(table(trialTracks$stim,trialTracks$resp))
 #                    
 summaryData$chiSqr[i] <- chisqr$statistic
 summaryData$pchi[i] <- chisqr$p.value
+summaryData$whole_chiSqr[i] <- whole_chisqr$statistic
+summaryData$whole_pchi[i] <- whole_chisqr$p.value
+
 summaryData$Rratio[i] <- rFirst/(rFirst + rSecond)
 summaryData$bias[i] <- biasp$p.value
 summaryData$biasRept[i] <- biasResp
@@ -96,7 +100,17 @@ if (is.na(chisqr$p.value)) {
   if (chisqr$statistic < 1) {GuessAll <- "surely guessing"}
 }
 
+if (is.na(whole_chisqr$p.value)) {
+  whole_GuessAll <- "fully biased"
+} else if (whole_chisqr$p.value < 0.05) {
+  whole_GuessAll <- "not guessing"
+} else {
+  whole_GuessAll <- "maybe guessing!"
+  if (whole_chisqr$statistic < 1) {whole_GuessAll <- "surely guessing"}
+}
+
 summaryData$GuessAll[i] <- GuessAll
+summaryData$whole_GuessAll[i] <- whole_GuessAll
 
 ### ALGORITHM for checking Smell Threshold
 # 1)	Chi square < 1, 'surely guessing', set Thresh = -1.5
@@ -130,12 +144,20 @@ summaryData$algo_type[i] <- algo_stage
 
 ```
 
-Table of Stimulus in 1st interval vs Response of which interval contained odor after start of baseline
+### Table of Stimulus vs Response after start of baseline
 ```{r, results="asis", echo=FALSE}
 kable(table(trialTracks$stim[startAnalysis:nTrack],trialTracks$resp[startAnalysis:nTrack]))
 ```
 
-* Blank-Second & Odor-First are correct responses, Blank-First & Odor-Second are incorrect responses
+Correct responses are the 'off diagonal' Odor-First & Blank-Second
+Incorrect responses are the 'diagonal' Blank-Frist & Odor-Second
+Column totals are the number of responses to that interval
+
+### Table of Stimulus vs Response for whole track
+```{r, results="asis", echo=FALSE}
+kable(table(trialTracks$stim,trialTracks$resp))
+```
+
 ```{r, echo = FALSE, fig.height=2.8, fig.width=3.5}
 plot(1:nTrack,track, col=trialTracks$corr+2, xlab = "Trial Number", ylab = "Smell Level", ylim = c(-11,-1), main = 'Track')
 
@@ -156,9 +178,12 @@ lines(c(algo_thresh,algo_thresh),c(0,1), col = "blue", lwd = 3, lty = 2)
 * Baseline was established at `r baseline` dB, with threshold `r sprintf("%.1f",thresh)` dB
 * The Algorithm suggests a threshold of `r sprintf("%.1f",algo_thresh)` dB because `r algo_stage`
 
-* Chi-Square for the track is `r sprintf("%.1f",chisqr$statistic)`, so this subject is `r GuessAll` (p = `r sprintf("%.3f",chisqr$p.value)`)
-* From the responses we can estimate a ``r sprintf("%.1f",(1-chisqr$p.value)*100)``% chance that the subject is responding to the stimulus.
-* The subject's response ratio was `r sprintf("%.1f",rFirst/(rFirst + rSecond)*100)`% first-interval and so probably `r biasResp` (p = `r sprintf("%.3f",biasp$p.value)`)
+* Chi-Square for the whole track is `r sprintf("%.1f",whole_chisqr$statistic)`, so this subject is `r whole_GuessAll` (p = `r sprintf("%.3f",whole_chisqr$p.value)`)
+* Chi-Square for the track after baseline is `r sprintf("%.1f",chisqr$statistic)`, so this subject is `r GuessAll` (p = `r sprintf("%.3f", chisqr$p.value)`)
+
+* From the responses we can estimate a `r sprintf("%.1f",(1-chisqr$p.value)*100)`% chance that the subject is responding to the stimulus after baseline, and `r sprintf("%.1f",(1-whole_chisqr$p.value)*100)`% chance that the subject is responding to the stimulus during the whole track.
+
+* The subject's response ratio was `r sprintf("%.1f",rFirst/(rFirst + rSecond)*100)`% first-interval `r sprintf("%.1f",rSecond/(rFirst + rSecond)*100)`% second-interval and so probably `r biasResp` (p = `r sprintf("%.3f",biasp$p.value)`)
 
 * The 75% point of the logistic regression on the track after baseline is `r sprintf("%.1f",logThresh)` dB and the fit is `r ThresSig`nificantly different to a flat line.
 

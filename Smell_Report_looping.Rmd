@@ -34,7 +34,10 @@ algo_type<- rep(NA, length(SID))
 baseline <- rep(NA, length(SID))
 chiSqr <- rep(NA, length(SID))
 pchi <- rep(NA, length(SID))
+whole_chiSqr <- rep(NA, length(SID))
+whole_pchi <- rep(NA, length(SID))
 GuessAll <- rep(NA, length(SID))
+whole_GuessAll <- rep(NA, length(SID))
 Rratio <- rep(NA, length(SID))
 bias <- rep(NA, length(SID))
 biasRept <- rep(NA, length(SID))
@@ -49,7 +52,7 @@ floorFlag <- rep(NA, length(SID))
 trackLength <- rep(NA, length(SID))
 sst_temp <- rep(NA, length(SID))
 
-summaryData <- data.frame(SID,gender,sst_age,group,algo_thresh, algo_type,baseline, chiSqr,pchi,GuessAll,Rratio,bias,biasRept, thresh, spread, lastfour,logThresh,logprob,threshdiff,ceilingFlag, floorFlag,trackLength, sst_temp)
+summaryData <- data.frame(SID,gender,sst_age,group,algo_thresh, algo_type,baseline, chiSqr,pchi,whole_chiSqr, whole_pchi, GuessAll, whole_GuessAll, Rratio, bias,biasRept, thresh, spread, lastfour,logThresh,logprob,threshdiff,ceilingFlag, floorFlag,trackLength, sst_temp)
 ```
 
 
@@ -74,7 +77,7 @@ The current algorithm is:
 \pagebreak
 
 
-## Subject Data
+# Subject Data
 
 ```{r, echo = FALSE, include=FALSE,warning=FALSE}
 out = NULL
@@ -98,7 +101,7 @@ write.csv(summaryData, file = paste('ST_SummaryData_Draft_',Sys.Date(),".csv", s
 ```
 `r paste(out ,collapse = '\n')`
 
-### Summary of Smell Threshold data
+## Summary of Smell Threshold data
 
 Obtained track data from `r length(summaryData$threshdiff)-sum(is.na(summaryData$threshdiff))` out of `r length(summaryData$threshdiff)` records.
 
@@ -112,7 +115,7 @@ Duplicated subject IDs
 
 
 ## Histograms
-# Chi-Square
+### Chi-Square
 Large chi-square indicates responses matched the stimuli
 It's a metric of how well the subject 'got it'
 
@@ -123,7 +126,7 @@ hist(summaryData$chiSqr)
 ```
 \pagebreak
 
-# Algoritm Thresholds
+### Algoritm Thresholds
 
 ``` {r, echo=FALSE, fig.height=3.5, fig.width=3.5}
 
@@ -134,7 +137,7 @@ hist(summaryData$algo_thresh, breaks = -11:-1)
 \pagebreak
 
 
-# Raw Reversal Thresholds
+### Raw Reversal Thresholds
 ```{r, echo= FALSE, fig.height=3.5, fig.width=3.5}
 
 hist(summaryData$thresh, breaks = -10:-2)
