@@ -25,10 +25,10 @@ leftD <- rep(0,length(leftT))
 for (j in 2:length(leftT)){
   if (leftT[j]<leftT[j-1]) {
     leftD[j] <- -1
-    } else if (leftT[j]>leftT[j-1]) {
-      leftD[j] <- 1
-      } else {leftD[j] <- leftD[j-1]}
-  }
+  } else if (leftT[j]>leftT[j-1]) {
+    leftD[j] <- 1
+  } else {leftD[j] <- leftD[j-1]}
+}
 
 leftD[length(leftD)+1] <- -trialTracks$corr[trialTracks$Stim == "L"][length(leftD)]
 revL <- rep(NA,6)
@@ -37,8 +37,11 @@ for (j in 2:length(leftD)){
   if (abs(leftD[j]-leftD[j-1])==2) {
     revL[k] = leftT[j-1]
     k<- k+1
-    }
   }
+}
+
+revL[is.na(revL)] <- leftT[nLeft]
+nrevL <- length(revL)
 
 xdatL <- c(trialTracks$track[trialTracks$Stim =='L'],-20, 50)
 ydatL <- c(trialTracks$corr[trialTracks$Stim =='L'],0,1)
@@ -52,7 +55,7 @@ for (j in 1:length(levs)) {
   correct[j] <- sum(ydatL[xdatL == levs[j]])
   incorrect[j] <- sum(1-ydatL[xdatL == levs[j]])
   fraction[j] <- correct[j] /(correct[j] +incorrect[j])
-  }
+}
 
 datL <- as.data.frame(cbind(levs,correct,incorrect,fraction))
 gLeft <- glm(cbind(correct, incorrect) ~ levs,family=binomial(mafc.logit(2)),datL)
@@ -66,10 +69,10 @@ rightD <- rep(0,length(rightT))
 for (j in 2:length(rightT)){
   if (rightT[j]<rightT[j-1]) {
     rightD[j] <- -1
-    } else if (rightT[j]>rightT[j-1]) {
-      rightD[j] <- 1
-      } else {rightD[j] <- rightD[j-1]}
-  }
+  } else if (rightT[j]>rightT[j-1]) {
+    rightD[j] <- 1
+  } else {rightD[j] <- rightD[j-1]}
+}
 rightD[length(rightD)+1] <- -trialTracks$corr[trialTracks$Stim == "R"][length(rightD)]
 revR <- rep(NA,6)
 k = 1
@@ -77,8 +80,10 @@ for (j in 2:length(rightD)){
   if (abs(rightD[j]-rightD[j-1])==2) {
     revR[k] = rightT[j-1]
     k<- k+1
-    }
   }
+}
+revR[is.na(revR)] <- rightT[nRight]
+nrevR <- length(revR)
 
 xdatR <- c(trialTracks$track[trialTracks$Stim =='R'], -20, 50)
 ydatR <- c(trialTracks$corr[trialTracks$Stim =='R'], 0, 1)
@@ -91,7 +96,7 @@ for (j in 1:length(levs)) {
   correct[j] <- sum(ydatR[xdatR == levs[j]])
   incorrect[j] <- sum(1-ydatR[xdatR == levs[j]])
   fraction[j] <- correct[j] /(correct[j] +incorrect[j])
-  }
+}
 
 datR <- as.data.frame(cbind(levs,correct,incorrect,fraction))
 gRight <- glm(cbind(correct, incorrect) ~ levs,family=binomial(mafc.logit(2)),datR)
@@ -115,7 +120,14 @@ levels(trialTracks$Stim) <- c("Stim L", "Stim R")
 levels(trialTracks$Resp) <- c("Resp L", "Resp R")
 
 chisqr<- chisq.test(table(trialTracks$Stim,trialTracks$Resp))
-                   
+
+summaryData$L_Range[i] <- max(leftT)- min(leftT)
+summaryData$R_Range[i] <- max(rightT)- min(rightT)
+summaryData$L_last4[i] <- mean(leftT[(nLeft-3):nLeft])
+summaryData$R_last4[i] <- mean(rightT[(nRight-3):nRight])
+summaryData$L_nRev[i] <- nrevL
+summaryData$R_nRev[i] <- nrevR
+
 summaryData$chiSqr[i] <- chisqr$statistic
 summaryData$pchi[i] <- chisqr$p.value
 summaryData$Rratio[i] <- rRight/(rLeft + rRight)
@@ -126,15 +138,21 @@ summaryData$L_logThresh[i] <- -coef(gLeft)[1] / coef(gLeft)[2]
 summaryData$L_logprob[i] <- pLogL
 if (pLogL < 0.05) {
   L_ThresSig = "sig"} else { L_ThresSig = "not sig"}
-summaryData$L_revThresh[i] <- mean(revL[3:6],na.rm = TRUE)
+
+
+summaryData$L_revThresh[i] <- mean(revL[3:6])
 summaryData$L_allRevs[i] <- mean(revL,na.rm = TRUE)
+summaryData$L_Stdev[i] <- sd(revL[3:6])
 
 summaryData$R_logThresh[i] <-  -coef(gRight)[1] / coef(gRight)[2]
 summaryData$R_logprob[i] <- pLogR
 if (pLogR < 0.05) {
   R_ThresSig = "sig"} else { R_ThresSig = "not sig"}
-summaryData$R_revThresh[i] <- mean(revR[3:6],na.rm = TRUE)
+
+
+summaryData$R_revThresh[i] <- mean(revR[3:6])
 summaryData$R_allRevs[i] <- mean(revR,na.rm = TRUE)
+summaryData$R_Stdev[i] <- sd(revR[3:6])
 
 if (is.na(chisqr$p.value)) {
   GuessAll <- "fully biased"
@@ -143,7 +161,7 @@ if (is.na(chisqr$p.value)) {
 } else {
   GuessAll <- "maybe guessing!"
   if (chisqr$statistic < 1) {GuessAll <- "surely guessing"}
-  }
+}
 
 Leftbinomial <- binom.test(corLeft, nLeft, 0.5)
 if (Leftbinomial$p.value < 0.05) {
@@ -152,7 +170,7 @@ if (Leftbinomial$p.value < 0.05) {
   guessLeft <- "guessing"
   optimal <- binom.test(corLeft, nLeft, 0.666)
   if (optimal$p.value > 0.05) {guessLeft <- "2D-1U optimal"}
-  }
+}
 
 Rightbinomial <- binom.test(corRight, nRight, 0.5)
 if (Rightbinomial$p.value < 0.05) {
@@ -161,7 +179,7 @@ if (Rightbinomial$p.value < 0.05) {
   guessRight <- "guessing"
   optimal <- binom.test(corRight, nRight, 0.666)
   if (optimal$p.value > 0.05) {guessRight <- "2D-1U optimal"}
-  }
+}
 
 summaryData$GuessAll[i] <- GuessAll
 summaryData$propLeft[i] <- corLeft/nLeft
@@ -182,9 +200,9 @@ kable(table(trialTracks$Resp,trialTracks$Stim))
 #Rightbinomial <- binom.test(corRight, nRight, 0.5)
 ```
 
-**Chi-Square for both tracks is `r chisqr$statistic`, so this subject is `r GuessAll` (p = `r chisqr$p.value`)**
+**Chi-Square for both tracks is `r sprintf("%.1f",chisqr$statistic)`, so this subject is `r GuessAll` (p = `r sprintf("%.3f",chisqr$p.value)`)**
 
-**The subject's response ratio was `r rRight/(rLeft + rRight)*100`% Right and so probably `r biasResp` (p = `r biasp$p.value`)**
+**The subject's response ratio was `r sprintf("%.1f",rRight/(rLeft + rRight)*100)`% Right and so probably `r biasResp` (p = `r sprintf("%.3f",biasp$p.value)`)**
 
 **Note on session: `r thisNote`**
 
@@ -207,10 +225,10 @@ lines(c(summaryData$R_revThresh[i],summaryData$R_revThresh[i]),c(0,1), col = "bl
 lines(c(summaryData$R_logThresh[i],summaryData$R_logThresh[i]),c(0,1), col = "red")
 ```
 
-* The proportion correct was `r corRight/nRight` and the exact binomial test suggests that this subject is `r guessRight` (p = `r Rightbinomial$p.value`)
-* The 75% point of the logistic regression is `r summaryData$R_logThresh[i]` dB and the fit is `r R_ThresSig`nificanctly different to a flat line.
-* The average of all reversals is `r summaryData$R_allRevs[i]` dB.
-* The average of the trimmed reversals is `r summaryData$R_revThresh[i]` dB.
+* The proportion correct was `r sprintf("%.3f",corRight/nRight)` and the exact binomial test suggests that this subject is `r guessRight` (p = `r sprintf("%.3f",Rightbinomial$p.value)`)
+* The 75% point of the logistic regression is `r sprintf("%.1f",summaryData$R_logThresh[i])` dB and the fit is `r R_ThresSig`nificanctly different to a flat line.
+* The average of all reversals is `r sprintf("%.1f",summaryData$R_allRevs[i])`dB.
+* The average of the trimmed reversals is `r sprintf("%.1f",summaryData$R_revThresh[i])`dB with std dev `r sprintf("%.2f",summaryData$R_Stdev[i])`dB.
 
 ```{r, echo = FALSE,fig.height=2.8, fig.width=3.5}
 plot(1:length(leftT),leftT, xlab = "Left Side Trial Number", ylab = "Electrogustometer Level", ylim = c(-10,40), main = 'Left Side Track')
@@ -228,10 +246,10 @@ lines(c(summaryData$L_logThresh[i],summaryData$L_logThresh[i]), c(0,1),col = "bl
 
 ```
 
-* The proportion correct was `r corLeft/nLeft` and the exact binomial test suggests that this subject is `r guessLeft` (p = `r Leftbinomial$p.value`)
-* The 75% point of the logistic regression is `r summaryData$L_logThresh[i]` dB and the fit is `r L_ThresSig`nificanctly different to a flat line.
-* The average of all reversals is `r mean(revL,na.rm = TRUE)` dB.
-* The average of the trimmed reversals is `r mean(revL[3:6],na.rm = TRUE)` dB.
+* The proportion correct was `r sprintf("%.3f",corLeft/nLeft)` and the exact binomial test suggests that this subject is `r guessLeft` (p = `r sprintf("%.3f",Leftbinomial$p.value)`)
+* The 75% point of the logistic regression is `r sprintf("%.1f",summaryData$L_logThresh[i])` dB and the fit is `r L_ThresSig`nificanctly different to a flat line.
+* The average of all reversals is `r sprintf("%.1f",mean(revL,na.rm = TRUE))`dB.
+* The average of the trimmed reversals is `r sprintf("%.1f",mean(revL[3:6],na.rm = TRUE))`dB with std dev `r sprintf("%.2f",summaryData$L_Stdev[i])`dB..
 
 ---
 

@@ -1,0 +1,375 @@
+---
+title: "TSFB in ASD: Taste Strips - DRAFT Report"
+author: "Paul D Allen"
+date: '`r date()`'
+output: html_document
+---
+### About this document
+```{r,  echo=FALSE, include=FALSE}
+require(rmarkdown)
+# require(ggplot2)
+# require(aod)
+# require(stats)
+# library("psyphy")
+library("knitr")
+library("xlsx")
+
+fileDir = 'C:/Users/pallen/Box Sync/Developmental Neuropsych Lab Management/Bennetto Lab Writing/Taste in ASD Paper/Taste Strip Analysis (Paul)'
+demofile = 'tastestrips_intensit_29SEP2016.xlsx'
+
+tastestrips <-  read.xlsx(paste(sep = "", collapse = NULL, fileDir, '/', demofile),1)
+
+tastestrips <-  tastestrips[!is.na(tastestrips$TSFB_Demographics..Dem.recordID),]
+
+tastestrips$group <- paste(tastestrips$TSFB_Demographics..dem.research.group, tastestrips$TSFB_Demographics..dem.pedPosition, sep = "_")
+
+tastelist <- c("Sweet", "Bitter", "Salty", "Sour", "Salty", "Sour", "Bitter", "Sweet", "Sour", "Blank",
+               "Sweet", "Bitter", "Salty", "Sweet", "Sour", "Bitter", "Salty", "Blank", "Sour","Sweet",
+               "Blank", "Salty", "Bitter", "Sweet", "Sour", "Blank", "Bitter", "Salty", "Sweet", "Sour",
+               "Salty", "Bitter", "Sweet", "Sour", "Bitter", "Salty")
+levellist <-c(1,1,1,1,1,1,1,1,2,0,
+              2,2,2,2,2,2,2,0,3,3,
+              0,3,3,3,3,0,3,3,4,4,
+              4,4,4,4,4,4)
+stripidlist <- c(4,16,12,8,12,8,16,4,7,17,3,15,11,3,7,15,11,17,6,2,17,10,14,2,6,17,14,10,1,5,9,13,1,5,13,9)
+
+
+
+```
+
+
+This document provides an overview of the responses to the TSFB Taste Strips.
+
+---
+
+## Number correct vs Strip Intensity Level
+
+``` {r, echo = FALSE, include=FALSE,warning=FALSE}
+
+sweeta <- tastestrips$TasteStrip.01score
+sweetb <- tastestrips$TasteStrip.08score
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet1 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.11score
+sweetb <- tastestrips$TasteStrip.14score
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet2 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.20score
+sweetb <- tastestrips$TasteStrip.24score
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet3 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.29score
+sweetb <- tastestrips$TasteStrip.33score
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet4 <- mean(sweeta + sweetb)
+
+
+soura <- tastestrips$TasteStrip.04score
+sourb <- tastestrips$TasteStrip.06score
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour1 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.09score
+sourb <- tastestrips$TasteStrip.15score
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour2 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.19score
+sourb <- tastestrips$TasteStrip.25score
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour3 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.30score
+sourb <- tastestrips$TasteStrip.34score
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour4 <- mean(soura + sourb)
+
+salta <- tastestrips$TasteStrip.03score
+saltb <- tastestrips$TasteStrip.05score
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt1 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.13score
+saltb <- tastestrips$TasteStrip.17score
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt2 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.22score
+saltb <- tastestrips$TasteStrip.28score
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt3 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.31score
+saltb <- tastestrips$TasteStrip.36score
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt4 <- mean(salta + saltb)
+
+bittera <- tastestrips$TasteStrip.02score
+bitterb <- tastestrips$TasteStrip.07score
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter1 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.12score
+bitterb <- tastestrips$TasteStrip.16score
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter2 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.23score
+bitterb <- tastestrips$TasteStrip.27score
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter3 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.32score
+bitterb <- tastestrips$TasteStrip.35score
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter4 <- mean(bittera + bitterb)
+
+#blank1 <- cor.test(tastestrips$TasteStrip.10score,tastestrips$TasteStrip.18score)
+#blank2 <- cor.test(tastestrips$TasteStrip.18score,tastestrips$TasteStrip.21score)
+#blank3 <- cor.test(tastestrips$TasteStrip.21score,tastestrips$TasteStrip.26score)
+#blank4 <- cor.test(tastestrips$TasteStrip.26score,tastestrips$TasteStrip.10score)
+
+plot(c(1,4),c(0,2), type = "n",
+     main = "Average correct responses",
+xlab = "Strip Intensity Level",
+ylab = "mean number correct")
+
+points(c(1,2,3,4),c(sweet1,sweet2,sweet3,sweet4), col = "red", type = "b")
+points(c(1,2,3,4),c(sour1,sour2,sour3,sour4), col = "orange", type = "b")
+points(c(1,2,3,4),c(salt1,salt2,salt3,salt4), col = "blue", type = "b")
+points(c(1,2,3,4),c(bitter1,bitter2,bitter3,bitter4), col = "green", type = "b")
+#points(c(1,2,3,4),c(blank1$estimate,blank2$estimate,blank3$estimate,blank4$estimate), col = "black", type = "b")
+
+```
+
+## Intensity  vs Strip Intensity Level
+
+``` {r, echo = FALSE, include=FALSE,warning=FALSE}
+
+sweeta <- tastestrips$TasteStrip.01intensity
+sweetb <- tastestrips$TasteStrip.08intensity
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet1 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.11intensity
+sweetb <- tastestrips$TasteStrip.14intensity
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet2 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.20intensity
+sweetb <- tastestrips$TasteStrip.24intensity
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet3 <- mean(sweeta + sweetb)
+
+sweeta <- tastestrips$TasteStrip.29intensity
+sweetb <- tastestrips$TasteStrip.33intensity
+sweeta[is.na(sweeta)] <- 0
+sweetb[is.na(sweetb)] <- 0
+sweet4 <- mean(sweeta + sweetb)
+
+
+soura <- tastestrips$TasteStrip.04intensity
+sourb <- tastestrips$TasteStrip.06intensity
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour1 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.09intensity
+sourb <- tastestrips$TasteStrip.15intensity
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour2 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.19intensity
+sourb <- tastestrips$TasteStrip.25intensity
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour3 <- mean(soura + sourb)
+
+soura <- tastestrips$TasteStrip.30intensity
+sourb <- tastestrips$TasteStrip.34intensity
+soura[is.na(soura)] <- 0
+sourb[is.na(sourb)] <- 0
+sour4 <- mean(soura + sourb)
+
+salta <- tastestrips$TasteStrip.03intensity
+saltb <- tastestrips$TasteStrip.05intensity
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt1 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.13intensity
+saltb <- tastestrips$TasteStrip.17intensity
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt2 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.22intensity
+saltb <- tastestrips$TasteStrip.28intensity
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt3 <- mean(salta + saltb)
+
+salta <- tastestrips$TasteStrip.31intensity
+saltb <- tastestrips$TasteStrip.36intensity
+salta[is.na(salta)] <- 0
+saltb[is.na(saltb)] <- 0
+salt4 <- mean(salta + saltb)
+
+bittera <- tastestrips$TasteStrip.02intensity
+bitterb <- tastestrips$TasteStrip.07intensity
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter1 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.12intensity
+bitterb <- tastestrips$TasteStrip.16intensity
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter2 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.23intensity
+bitterb <- tastestrips$TasteStrip.27intensity
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter3 <- mean(bittera + bitterb)
+
+bittera <- tastestrips$TasteStrip.32intensity
+bitterb <- tastestrips$TasteStrip.35intensity
+bittera[is.na(bittera)] <- 0
+bitterb[is.na(bitterb)] <- 0
+bitter4 <- mean(bittera + bitterb)
+
+blank1 <- tastestrips$TasteStrip.10intensity
+blank1[is.na(blank1)] <- 0
+blank1 <- mean(blank1)
+blank2 <- tastestrips$TasteStrip.18intensity
+blank2[is.na(blank2)] <- 0
+blank2 <- mean(blank2)
+blank3 <- tastestrips$TasteStrip.21intensity
+blank3[is.na(blank3)] <- 0
+blank3 <- mean(blank3)
+blank4 <- tastestrips$TasteStrip.26intensity
+blank4[is.na(blank4)] <- 0
+blank4 <- mean(blank4)
+
+plot(c(1,4),c(0,14), type = "n",
+     main = "Average Intensity Rating",
+xlab = "Strip Intensity Level",
+ylab = "Intensity rating")
+
+points(c(1,2,3,4),c(sweet1,sweet2,sweet3,sweet4), col = "red", type = "b")
+points(c(1,2,3,4),c(sour1,sour2,sour3,sour4), col = "orange", type = "b")
+points(c(1,2,3,4),c(salt1,salt2,salt3,salt4), col = "blue", type = "b")
+points(c(1,2,3,4),c(bitter1,bitter2,bitter3,bitter4), col = "green", type = "b")
+points(c(1,2,3,4),c(blank1,blank2,blank3,blank4), col = "black", type = "b")
+
+```
+
+## Test-restest reliability for type
+
+``` {r, echo = FALSE, include=FALSE,warning=FALSE}
+
+sweet1 <- cor.test(tastestrips$TasteStrip.01response,tastestrips$TasteStrip.08response)
+sweet2 <- cor.test(tastestrips$TasteStrip.11response,tastestrips$TasteStrip.14response)
+sweet3 <- cor.test(tastestrips$TasteStrip.20response,tastestrips$TasteStrip.24response)
+sweet4 <- cor.test(tastestrips$TasteStrip.29response,tastestrips$TasteStrip.33response)
+
+sour1 <- cor.test(tastestrips$TasteStrip.04response,tastestrips$TasteStrip.06response)
+sour2 <- cor.test(tastestrips$TasteStrip.09response,tastestrips$TasteStrip.15response)
+sour3 <- cor.test(tastestrips$TasteStrip.19response,tastestrips$TasteStrip.25response)
+sour4 <- cor.test(tastestrips$TasteStrip.30response,tastestrips$TasteStrip.34response)
+
+salt1 <- cor.test(tastestrips$TasteStrip.03response,tastestrips$TasteStrip.05response)
+salt2 <- cor.test(tastestrips$TasteStrip.13response,tastestrips$TasteStrip.17response)
+salt3 <- cor.test(tastestrips$TasteStrip.22response,tastestrips$TasteStrip.28response)
+salt4 <- cor.test(tastestrips$TasteStrip.31response,tastestrips$TasteStrip.36response)
+
+bitter1 <- cor.test(tastestrips$TasteStrip.02response,tastestrips$TasteStrip.07response)
+bitter2 <- cor.test(tastestrips$TasteStrip.12response,tastestrips$TasteStrip.16response)
+bitter3 <- cor.test(tastestrips$TasteStrip.23response,tastestrips$TasteStrip.27response)
+bitter4 <- cor.test(tastestrips$TasteStrip.32response,tastestrips$TasteStrip.35response)
+
+blank1 <- cor.test(tastestrips$TasteStrip.10response,tastestrips$TasteStrip.18response)
+blank2 <- cor.test(tastestrips$TasteStrip.18response,tastestrips$TasteStrip.21response)
+blank3 <- cor.test(tastestrips$TasteStrip.21response,tastestrips$TasteStrip.26response)
+blank4 <- cor.test(tastestrips$TasteStrip.26response,tastestrips$TasteStrip.10response)
+
+plot(c(1,4),c(0,0.5), type = "n",
+     main = "Test-Retest Pearson's product moment correlation",
+xlab = "Strip Intensity Level",
+ylab = "Pearson's r")
+
+points(c(1,2,3,4),c(sweet1$estimate,sweet2$estimate,sweet3$estimate,sweet4$estimate), col = "red", type = "b")
+points(c(1,2,3,4),c(sour1$estimate,sour2$estimate,sour3$estimate,sour4$estimate), col = "orange", type = "b")
+points(c(1,2,3,4),c(salt1$estimate,salt2$estimate,salt3$estimate,salt4$estimate), col = "blue", type = "b")
+points(c(1,2,3,4),c(bitter1$estimate,bitter2$estimate,bitter3$estimate,bitter4$estimate), col = "green", type = "b")
+points(c(1,2,3,4),c(blank1$estimate,blank2$estimate,blank3$estimate,blank4$estimate), col = "black", type = "b")
+
+```
+
+
+## Test-restest reliability for Intensity
+
+``` {r, echo = FALSE, include=FALSE,warning=FALSE}
+
+sweet1 <- cor.test(tastestrips$TasteStrip.01intensity,tastestrips$TasteStrip.08intensity)
+sweet2 <- cor.test(tastestrips$TasteStrip.11intensity,tastestrips$TasteStrip.14intensity)
+sweet3 <- cor.test(tastestrips$TasteStrip.20intensity,tastestrips$TasteStrip.24intensity)
+sweet4 <- cor.test(tastestrips$TasteStrip.29intensity,tastestrips$TasteStrip.33intensity)
+
+sour1 <- cor.test(tastestrips$TasteStrip.04intensity,tastestrips$TasteStrip.06intensity)
+sour2 <- cor.test(tastestrips$TasteStrip.09intensity,tastestrips$TasteStrip.15intensity)
+sour3 <- cor.test(tastestrips$TasteStrip.19intensity,tastestrips$TasteStrip.25intensity)
+sour4 <- cor.test(tastestrips$TasteStrip.30intensity,tastestrips$TasteStrip.34intensity)
+
+salt1 <- cor.test(tastestrips$TasteStrip.03intensity,tastestrips$TasteStrip.05intensity)
+salt2 <- cor.test(tastestrips$TasteStrip.13intensity,tastestrips$TasteStrip.17intensity)
+salt3 <- cor.test(tastestrips$TasteStrip.22intensity,tastestrips$TasteStrip.28intensity)
+salt4 <- cor.test(tastestrips$TasteStrip.31intensity,tastestrips$TasteStrip.36intensity)
+
+bitter1 <- cor.test(tastestrips$TasteStrip.02intensity,tastestrips$TasteStrip.07intensity)
+bitter2 <- cor.test(tastestrips$TasteStrip.12intensity,tastestrips$TasteStrip.16intensity)
+bitter3 <- cor.test(tastestrips$TasteStrip.23intensity,tastestrips$TasteStrip.27intensity)
+bitter4 <- cor.test(tastestrips$TasteStrip.32intensity,tastestrips$TasteStrip.35intensity)
+
+blank1 <- cor.test(tastestrips$TasteStrip.10intensity,tastestrips$TasteStrip.18intensity)
+blank2 <- cor.test(tastestrips$TasteStrip.18intensity,tastestrips$TasteStrip.21intensity)
+blank3 <- cor.test(tastestrips$TasteStrip.21intensity,tastestrips$TasteStrip.26intensity)
+blank4 <- cor.test(tastestrips$TasteStrip.26intensity,tastestrips$TasteStrip.10intensity)
+
+plot(c(1,4),c(0.0,1), type = "n",
+     main = "Test-Retest Pearson's product moment correlation",
+xlab = "Strip Intensity Level",
+ylab = "Pearson's r")
+
+points(c(1,2,3,4),c(sweet1$estimate,sweet2$estimate,sweet3$estimate,sweet4$estimate), col = "red", type = "b")
+points(c(1,2,3,4),c(sour1$estimate,sour2$estimate,sour3$estimate,sour4$estimate), col = "orange", type = "b")
+points(c(1,2,3,4),c(salt1$estimate,salt2$estimate,salt3$estimate,salt4$estimate), col = "blue", type = "b")
+points(c(1,2,3,4),c(bitter1$estimate,bitter2$estimate,bitter3$estimate,bitter4$estimate), col = "green", type = "b")
+points(c(1,2,3,4),c(blank1$estimate,blank2$estimate,blank3$estimate,blank4$estimate), col = "black", type = "b")
+
+```
+

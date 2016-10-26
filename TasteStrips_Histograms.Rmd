@@ -14,10 +14,13 @@ require(rmarkdown)
 library("knitr")
 library("xlsx")
 
-fileDir = 'C:/Users/pallen/Box Sync/Developmental Neuropsych Lab Management/Bennetto Lab Writing/Taste in ASD Paper'
-demofile = 'tastestrips_intensit_19SEP2016.xlsx'
+fileDir = 'C:/Users/pallen/Box Sync/Developmental Neuropsych Lab Management/Bennetto Lab Writing/Taste in ASD Paper/Taste Strip Analysis (Paul)'
+demofile = 'tastestrips_intensit_29SEP2016.xlsx'
 
 tastestrips <-  read.xlsx(paste(sep = "", collapse = NULL, fileDir, '/', demofile),1)
+
+tastestrips <-  tastestrips[!is.na(tastestrips$TSFB_Demographics..Dem.recordID),]
+
 tastestrips$group <- paste(tastestrips$TSFB_Demographics..dem.research.group, tastestrips$TSFB_Demographics..dem.pedPosition, sep = "_")
 
 tastelist <- c("Sweet", "Bitter", "Salty", "Sour", "Salty", "Sour", "Bitter", "Sweet", "Sour", "Blank",

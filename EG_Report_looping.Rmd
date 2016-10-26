@@ -19,14 +19,16 @@ dataDir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data/Electrogustometr
 filedir = 'X:/Research/BennettoLab/TSFB Study/Data/Cleaned data'
 source('C:/Users/pallen/Documents/GitHub/R_TSFB/gustometerData.R')
 
-notefile = 'notesEGST_2016_02_05.xlsx'
-demofile = 'DemoEG_2016_02_05.xlsx'
+#notefile = 'notesEGST_2016_02_05.xlsx'
+#demofile = 'DemoEG_2016_02_05.xlsx'
+notefile = 'EG_ST_NOTES_2016_10_21.xlsx'
+demofile = 'DemoEG_2016_10_21.xlsx'
 
 gustnotes <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', notefile),1)
 DemoEG <-  read.xlsx(paste(sep = "", collapse = NULL, filedir, '/', demofile),1)
 
-gustnotes$ID <- paste('TS', gustnotes$FamilyID, gustnotes$MemberID, sep ="")
-DemoEG$type <- paste(DemoEG$OrdName, DemoEG$Group, sep ="_")
+gustnotes$ID <- paste('TS', gustnotes$EGSTT.FamilyID, gustnotes$EGSTT.MemberID, sep ="")
+DemoEG$type <- paste(DemoEG$dem.pedPosition, DemoEG$dem.research.group, sep ="_")
 #SURFACE 
 #dataDir = 'C:/Users/paul allen/Dropbox/@ Across-Site work tools/ASD/_Data Analysis Taste-Smell/Taste Smell Data/Completed EG Files (notepad)'
 #filedir = 'C:/Users/paul allen/Dropbox/@R-working/gustometry'
@@ -61,6 +63,8 @@ timeStampData = data.frame(
   ntimes = numStamps
   )
 SID <- substr(allFiles, start = 7, stop = 13)
+status <- rep(NA, length(SID))
+excluded <- rep(NA, length(SID))
 gender <- rep(NA, length(SID))
 age <- rep(NA, length(SID))
 group <- rep(NA, length(SID))
@@ -72,6 +76,14 @@ L_revThresh <- rep(NA, length(SID))
 R_revThresh <- rep(NA, length(SID))
 L_allRevs <- rep(NA, length(SID))
 R_allRevs <- rep(NA, length(SID))
+L_last4 <- rep(NA, length(SID))
+R_last4 <- rep(NA, length(SID))
+L_nRev <- rep(NA, length(SID))
+R_nRev <- rep(NA, length(SID))
+L_Range <- rep(NA, length(SID))
+R_Range <- rep(NA, length(SID))
+L_Stdev <- rep(NA, length(SID))
+R_Stdev <- rep(NA, length(SID))
 chiSqr <- rep(NA, length(SID))
 GuessAll <- rep(NA, length(SID))
 guessLeft <- rep(NA, length(SID))
@@ -87,7 +99,8 @@ biasRept <- rep(NA, length(SID))
 note <- rep(NA, length(SID))
 demonote <- rep(NA, length(SID))
 
-summaryData <- data.frame(SID,gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept,R_logThresh,R_logprob,R_allRevs,R_revThresh,propRight,pRight,guessRight,L_logThresh,L_logprob,L_revThresh,L_allRevs,propLeft,pLeft,guessLeft, note, demonote)
+summaryData <- data.frame(SID,status, excluded, gender,age,group,chiSqr,pchi,GuessAll,Rratio,bias,biasRept, L_revThresh, R_revThresh,L_allRevs, R_allRevs,L_logThresh, R_logThresh,L_last4,R_last4,L_nRev, R_nRev, L_Range,R_Range,L_Stdev,R_Stdev,propRight,pRight,guessRight,R_logprob, propLeft,pLeft, guessLeft,L_logprob, note, demonote)
+
 ```
 
 
@@ -108,24 +121,32 @@ We want to be able to also compare the threshold estimates from reversals and re
 out = NULL
 numtoanalyse = length(allFiles)
 for (i in 1:numtoanalyse) {
-  thisNote <- gustnotes$note[gustnotes$ID == SID[i]]
+  thisNote <- gustnotes$EGSTT.EGadminNotes[gustnotes$ID == SID[i]]
   thisNote <- paste(thisNote, collapse="; ")
   if (length(thisNote)==0) {thisNote = 'No note in the database!'}
   summaryData$note[i] <- thisNote
   
-  thisGender <- as.character(DemoEG$Gender[DemoEG$SID == SID[i]])
+  thisGender <- as.character(DemoEG$dem.gender[DemoEG$Dem.recordID == SID[i]])
   if (length(thisGender)==0) {thisGender = 'NA'}  
   summaryData$gender[i] <- thisGender
   
-  thisAge <- DemoEG$Age[DemoEG$SID == SID[i]]
+   thisStatus <- as.character(DemoEG$dem.status[DemoEG$Dem.recordID == SID[i]])
+  if (length(thisStatus)==0) {thisStatus = 'NA'}  
+  summaryData$status[i] <- thisStatus
+  
+     thisExcluded <- as.character(DemoEG$TSFB.excluded[DemoEG$Dem.recordID == SID[i]])
+  if (length(thisExcluded)==0) {thisExcluded = 'NA'}  
+  summaryData$excluded[i] <- thisExcluded
+  
+  thisAge <- DemoEG$AgeEval[DemoEG$Dem.recordID == SID[i]]
   if (length(thisAge)==0) {thisAge = 'NA'} 
   summaryData$age[i] <- thisAge
   
-  thisGroup <- DemoEG$type[DemoEG$SID == SID[i]]
+  thisGroup <- DemoEG$type[DemoEG$Dem.recordID == SID[i]]
   if (length(thisGroup)==0) {thisGroup = 'NA'} 
   summaryData$group[i] <- thisGroup
   
-  summaryData$demonote[i] <- paste(DemoEG$Note[DemoEG$SID == SID[i]], collapse="; ")
+  summaryData$demonote[i] <- paste(DemoEG$TSFB.excluded_notes[DemoEG$Dem.recordID == SID[i]], collapse="; ")
   if (numStamps[i] != 2) {
     out = c(out, c('Skip file ', allFiles[i]), 'Note:', thisNote, '---')}
   else {
